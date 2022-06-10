@@ -61,6 +61,7 @@ import org.opensearch.action.admin.indices.create.CreateIndexRequest;
 import org.opensearch.action.admin.indices.datastream.CreateDataStreamAction;
 import org.opensearch.action.admin.indices.mapping.put.PutMappingRequest;
 import org.opensearch.action.admin.indices.resolve.ResolveIndexAction;
+import org.opensearch.action.admin.indices.template.put.PutComposableIndexTemplateAction;
 import org.opensearch.action.bulk.BulkRequest;
 import org.opensearch.action.bulk.BulkShardRequest;
 import org.opensearch.action.delete.DeleteRequest;
@@ -81,6 +82,8 @@ import org.opensearch.action.support.single.shard.SingleShardRequest;
 import org.opensearch.action.termvectors.MultiTermVectorsRequest;
 import org.opensearch.action.termvectors.TermVectorsRequest;
 import org.opensearch.action.update.UpdateRequest;
+import org.opensearch.client.indices.PutComposableIndexTemplateRequest;
+import org.opensearch.client.indices.PutIndexTemplateRequest;
 import org.opensearch.cluster.ClusterState;
 import org.opensearch.cluster.metadata.IndexAbstraction;
 import org.opensearch.cluster.metadata.IndexNameExpressionResolver;
@@ -688,6 +691,8 @@ public class IndexResolverReplacer {
                 return false;
             }
             ((CreateIndexRequest) request).index(newIndices.length!=1?null:newIndices[0]);
+        } else if (request instanceof PutComposableIndexTemplateAction.Request) {
+            // do nothing
         } else if (request instanceof CreateDataStreamAction.Request) {
             provider.provide(((CreateDataStreamAction.Request) request).indices(), request, false);
         } else if (request instanceof ReindexRequest) {

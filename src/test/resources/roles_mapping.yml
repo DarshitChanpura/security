@@ -413,3 +413,8 @@ data_stream_3:
   hidden: false
   users:
     - "ds3"
+sem-role:
+  reserved: false
+  hidden: false
+  users:
+    - "sem-user"

@@ -1129,6 +1129,17 @@ data_stream_3:
       allowed_actions:
         - "DATASTREAM_ALL"
 
+sem-role:
+  reserved: true
+  hidden: false
+  description: "Migrated from v6 (all types mapped)"
+  cluster_permissions: [ "cluster_monitor", "indices:admin/index_template/*" ]
+  index_permissions:
+    - index_patterns:
+        - "sem*"
+      allowed_actions:
+        - "*"
+
 hidden_test:
   cluster_permissions:
   - SGS_CLUSTER_COMPOSITE_OPS
