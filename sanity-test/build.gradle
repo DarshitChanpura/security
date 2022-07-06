@@ -1,0 +1,32 @@
+apply plugin: 'opensearch.build'
+apply plugin: 'opensearch.rest-test'
+apply plugin: 'java'
+
+apply plugin: 'opensearch.testclusters'
+
+group 'org.opensearch'
+version '2.0.0.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+}
+
+task integTestRemote(type: RestIntegTestTask) {
+    doFirst {
+        systemProperty "tests.cluster.follower.http_hosts", System.getProperty("follower.http_host")
+        systemProperty "tests.cluster.follower.transport_hosts", System.getProperty("follower.transport_host")
+        systemProperty "tests.cluster.follower.security_enabled", System.getProperty("security_enabled")
+    }
+    filter {
+        setIncludePatterns("SingleClusterSanityIT")
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
