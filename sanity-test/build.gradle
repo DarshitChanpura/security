@@ -1,0 +1,145 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The OpenSearch Contributors require contributions made to
+ * this file be licensed under the Apache-2.0 license or a
+ * compatible open source license.
+ *
+ * Modifications Copyright OpenSearch Contributors. See
+ * GitHub history for details.
+ */
+
+/*
+ * Licensed to Elasticsearch under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Elasticsearch licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+
+import org.opensearch.gradle.test.RestIntegTestTask
+import java.util.concurrent.Callable
+
+apply plugin: 'opensearch.build'
+apply plugin: 'opensearch.rest-test'
+apply plugin: 'java'
+
+apply plugin: 'opensearch.testclusters'
+
+compileTestJava.enabled = false
+
+ext {
+    projectSubstitutions = [:]
+    licenseFile = rootProject.file('LICENSE.TXT')
+    noticeFile = rootProject.file('NOTICE')
+}
+
+buildscript {
+    ext {
+        opensearch_version = System.getProperty("opensearch.version", "2.1.0")
+        opensearch_group = "org.opensearch"
+    }
+    repositories {
+        mavenLocal()
+        maven { url "https://aws.oss.sonatype.org/content/repositories/snapshots" }
+        mavenCentral()
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+
+    dependencies {
+        classpath "${opensearch_group}.gradle:build-tools:${opensearch_version}"
+    }
+}
+
+repositories {
+    mavenLocal()
+    maven { url "https://aws.oss.sonatype.org/content/repositories/snapshots" }
+    mavenCentral()
+    maven { url "https://plugins.gradle.org/m2/" }
+}
+
+dependencies {
+    testImplementation "org.opensearch.test:framework:${opensearch_version}"
+}
+
+String baseName = "follower"
+String filePath = "src/test/resources/"
+String projectVersion = "2.1.0.0"
+
+testClusters {
+    "${baseName}" {
+        testDistribution = "ARCHIVE"
+        numberOfNodes = 3
+        plugin(provider(new Callable<RegularFile>() {
+            @Override
+            RegularFile call() throws Exception {
+                return new RegularFile() {
+                    @Override
+                    File getAsFile() {
+                        return fileTree(filePath  + projectVersion).getSingleFile()
+                    }
+                }
+            }
+        }))
+        nodes.each { node ->
+            def plugins = node.plugins
+            def firstPlugin = plugins.get(0)
+            plugins.remove(0)
+            plugins.add(firstPlugin)
+
+            node.extraConfigFile("kirk.pem", file("src/test/resources/security/kirk.pem"))
+            node.extraConfigFile("kirk-key.pem", file("src/test/resources/security/kirk-key.pem"))
+            node.extraConfigFile("esnode.pem", file("src/test/resources/security/esnode.pem"))
+            node.extraConfigFile("esnode-key.pem", file("src/test/resources/security/esnode-key.pem"))
+            node.extraConfigFile("root-ca.pem", file("src/test/resources/security/root-ca.pem"))
+            node.setting("plugins.security.disabled", "true")
+            node.setting("plugins.security.ssl.transport.pemcert_filepath", "esnode.pem")
+            node.setting("plugins.security.ssl.transport.pemkey_filepath", "esnode-key.pem")
+            node.setting("plugins.security.ssl.transport.pemtrustedcas_filepath", "root-ca.pem")
+            node.setting("plugins.security.ssl.transport.enforce_hostname_verification", "false")
+            node.setting("plugins.security.ssl.http.enabled", "true")
+            node.setting("plugins.security.ssl.http.pemcert_filepath", "esnode.pem")
+            node.setting("plugins.security.ssl.http.pemkey_filepath", "esnode-key.pem")
+            node.setting("plugins.security.ssl.http.pemtrustedcas_filepath", "root-ca.pem")
+            node.setting("plugins.security.allow_unsafe_democertificates", "true")
+            node.setting("plugins.security.allow_default_init_securityindex", "true")
+            node.setting("plugins.security.authcz.admin_dn", "CN=kirk,OU=client,O=client,L=test,C=de")
+            node.setting("plugins.security.audit.type", "internal_elasticsearch")
+            node.setting("plugins.security.enable_snapshot_restore_privilege", "true")
+            node.setting("plugins.security.check_snapshot_restore_write_privileges", "true")
+            node.setting("plugins.security.restapi.roles_enabled", "[\"all_access\", \"security_rest_api_access\"]")
+            node.setting("plugins.security.system_indices.enabled", "true")
+        }
+
+        setting 'path.repo', "${buildDir}/cluster/shared/repo/${baseName}"
+        setting 'http.content_type.required', 'true'
+    }
+}
+
+
+task integTestRemote(type: RestIntegTestTask) {
+    useCluster testClusters."${baseName}"
+    doFirst {
+        systemProperty "tests.cluster.follower.http_hosts", System.getProperty("follower.http_host")
+        systemProperty "tests.cluster.follower.transport_hosts", System.getProperty("follower.transport_host")
+        systemProperty "tests.cluster.follower.security_enabled", System.getProperty("security_enabled")
+        systemProperty "tests.security.manager", "false"
+    }
+    filter {
+        includeTestsMatching("SingleClusterSanityIT")
+    }
+    nonInputProperties.systemProperty("tests.clustername", "${baseName}")
+    nonInputProperties.systemProperty('tests.rest.cluster', "${-> testClusters."${baseName}".allHttpSocketURI.join(",")}")
+}
