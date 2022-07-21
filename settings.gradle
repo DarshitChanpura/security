@@ -6,4 +6,3 @@
 
 rootProject.name = 'opensearch-security'
 include 'sanity-test'
-
