@@ -148,25 +148,9 @@ List<Provider<RegularFile>> plugins = [
 // Creates a test cluster with 3 nodes of the old version.
 2.times {i ->
     task "${baseName}#oldVersionClusterTask$i"(type: StandaloneRestIntegTestTask) {
-        exclude '**/*Test*'
-        filter {
-            excludeTestsMatching "org.opensearch.security.sanity.tests.*"
-        }
         useCluster testClusters."${baseName}$i"
-        if (System.getProperty("mixedCluster") != null) {
-            filter {
-                includeTest("org.opensearch.security.bwc.SecurityBackwardsCompatibilityIT", "testPluginUpgradeInAMixedCluster")
-            }
-        }
-        if (System.getProperty("rollingUpgradeCluster") != null) {
-            filter {
-                includeTest("org.opensearch.security.bwc.SecurityBackwardsCompatibilityIT", "testPluginUpgradeInARollingUpgradedCluster")
-            }
-        }
-        if (System.getProperty("fullRestartCluster") != null) {
-            filter {
-                includeTest("org.opensearch.security.bwc.SecurityBackwardsCompatibilityIT", "testPluginUpgradeInAnUpgradedCluster")
-            }
+        filter {
+            includeTestsMatching "org.opensearch.security.bwc.SecurityBackwardsCompatibilityIT"
         }
         systemProperty 'tests.rest.bwcsuite', 'old_cluster'
         systemProperty 'tests.rest.bwcsuite_round', 'old'
@@ -180,24 +164,13 @@ List<Provider<RegularFile>> plugins = [
 // This results in a mixed cluster with 2 nodes on the old version and 1 upgraded node.
 // This is also used as a one third upgraded cluster for a rolling upgrade.
 task "${baseName}#mixedClusterTask"(type: StandaloneRestIntegTestTask) {
-    exclude '**/*Test*'
-    filter {
-        excludeTestsMatching "org.opensearch.security.sanity.tests.*"
-    }
     dependsOn "${baseName}#oldVersionClusterTask0"
     useCluster testClusters."${baseName}0"
     doFirst {
         testClusters."${baseName}0".upgradeNodeAndPluginToNextVersion(plugins)
     }
-    if (System.getProperty("mixedCluster") != null) {
-        filter {
-            includeTest("org.opensearch.security.bwc.SecurityBackwardsCompatibilityIT", "testPluginUpgradeInAMixedCluster")
-        }
-    }
-    if (System.getProperty("rollingUpgradeCluster") != null) {
-        filter {
-            includeTest("org.opensearch.security.bwc.SecurityBackwardsCompatibilityIT", "testPluginUpgradeInARollingUpgradedCluster")
-        }
+    filter {
+        includeTestsMatching "org.opensearch.security.bwc.SecurityBackwardsCompatibilityIT"
     }
     systemProperty 'tests.rest.bwcsuite', 'mixed_cluster'
     systemProperty 'tests.rest.bwcsuite_round', 'first'
@@ -210,19 +183,13 @@ task "${baseName}#mixedClusterTask"(type: StandaloneRestIntegTestTask) {
 // This results in a mixed cluster with 1 node on the old version and 2 upgraded nodes.
 // This is used for rolling upgrade.
 task "${baseName}#twoThirdsUpgradedClusterTask"(type: StandaloneRestIntegTestTask) {
-    exclude '**/*Test*'
-    filter {
-        excludeTestsMatching "org.opensearch.security.sanity.tests.*"
-    }
     dependsOn "${baseName}#mixedClusterTask"
     useCluster testClusters."${baseName}0"
     doFirst {
         testClusters."${baseName}0".upgradeNodeAndPluginToNextVersion(plugins)
     }
-    if (System.getProperty("rollingUpgradeCluster") != null) {
-        filter {
-            includeTest("org.opensearch.security.bwc.SecurityBackwardsCompatibilityIT", "testPluginUpgradeInARollingUpgradedCluster")
-        }
+    filter {
+        includeTestsMatching "org.opensearch.security.bwc.SecurityBackwardsCompatibilityIT"
     }
     systemProperty 'tests.rest.bwcsuite', 'mixed_cluster'
     systemProperty 'tests.rest.bwcsuite_round', 'second'
@@ -235,19 +202,13 @@ task "${baseName}#twoThirdsUpgradedClusterTask"(type: StandaloneRestIntegTestTas
 // This results in a fully upgraded cluster.
 // This is used for rolling upgrade.
 task "${baseName}#rollingUpgradeClusterTask"(type: StandaloneRestIntegTestTask) {
-    exclude '**/*Test*'
-    filter {
-        excludeTestsMatching "org.opensearch.security.sanity.tests.*"
-    }
     dependsOn "${baseName}#twoThirdsUpgradedClusterTask"
     useCluster testClusters."${baseName}0"
     doFirst {
         testClusters."${baseName}0".upgradeNodeAndPluginToNextVersion(plugins)
     }
-    if (System.getProperty("rollingUpgradeCluster") != null) {
-        filter {
-            includeTest("org.opensearch.security.bwc.SecurityBackwardsCompatibilityIT", "testPluginUpgradeInARollingUpgradedCluster")
-        }
+    filter {
+        includeTestsMatching "org.opensearch.security.bwc.SecurityBackwardsCompatibilityIT"
     }
     systemProperty 'tests.rest.bwcsuite', 'mixed_cluster'
     systemProperty 'tests.rest.bwcsuite_round', 'third'
@@ -259,19 +220,13 @@ task "${baseName}#rollingUpgradeClusterTask"(type: StandaloneRestIntegTestTask) 
 // Upgrades all the nodes of the old cluster to new OpenSearch version with upgraded plugin version
 // at the same time resulting in a fully upgraded cluster.
 tasks.register("${baseName}#fullRestartClusterTask", StandaloneRestIntegTestTask) {
-    exclude '**/*Test*'
-    filter {
-        excludeTestsMatching "org.opensearch.security.sanity.tests.*"
-    }
     dependsOn "${baseName}#oldVersionClusterTask1"
     useCluster testClusters."${baseName}1"
     doFirst {
         testClusters."${baseName}1".upgradeAllNodesAndPluginsToNextVersion(plugins)
     }
-    if (System.getProperty("fullRestartCluster") != null) {
-        filter {
-            includeTest("org.opensearch.security.bwc.SecurityBackwardsCompatibilityIT", "testPluginUpgradeInAnUpgradedCluster")
-        }
+    filter {
+        includeTestsMatching "org.opensearch.security.bwc.SecurityBackwardsCompatibilityIT"
     }
     systemProperty 'tests.rest.bwcsuite', 'upgraded_cluster'
     systemProperty 'tests.plugin_bwc_version', bwcVersion
@@ -282,9 +237,7 @@ tasks.register("${baseName}#fullRestartClusterTask", StandaloneRestIntegTestTask
 // A bwc test suite which runs all the bwc tasks combined.
 task bwcTestSuite(type: StandaloneRestIntegTestTask) {
     exclude '**/*Test*'
-    filter {
-        excludeTestsMatching "org.opensearch.security.sanity.tests.*"
-    }
+    exclude '**/*Sanity*'
     dependsOn tasks.named("${baseName}#mixedClusterTask")
     dependsOn tasks.named("${baseName}#rollingUpgradeClusterTask")
     dependsOn tasks.named("${baseName}#fullRestartClusterTask")

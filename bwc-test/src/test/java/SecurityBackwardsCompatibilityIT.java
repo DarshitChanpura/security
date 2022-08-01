@@ -52,23 +52,8 @@ public class SecurityBackwardsCompatibilityIT extends OpenSearchRestTestCase {
                 .build();
     }
 
-    public void testPluginUpgradeInAMixedCluster() throws Exception {
-        assertPluginUpgrade("_nodes/" + CLUSTER_NAME + "-0/plugins");
-    }
-
-    public void testPluginUpgradeInAnUpgradedCluster() throws Exception {
-        assertPluginUpgrade("_nodes/plugins");
-    }
-
-    public void testPluginUpgradeInARollingUpgradedCluster() throws Exception {
-        String round = System.getProperty("tests.rest.bwcsuite_round");
-        if (round.equals("first") || round.equals("old")) {
-            assertPluginUpgrade("_nodes/" + CLUSTER_NAME + "-0/plugins");
-        } else if (round.equals("second")) {
-            assertPluginUpgrade("_nodes/" + CLUSTER_NAME + "-1/plugins");
-        } else if (round.equals("third")) {
-            assertPluginUpgrade("_nodes/" + CLUSTER_NAME + "-2/plugins");
-        }
+    public void testPluginUpgrade() throws Exception {
+        assertPluginUpgrade();
     }
 
     private enum ClusterType {
@@ -90,8 +75,30 @@ public class SecurityBackwardsCompatibilityIT extends OpenSearchRestTestCase {
         }
     }
 
+    private String getUri() {
+        switch (CLUSTER_TYPE) {
+            case OLD:
+                return "_nodes/" + CLUSTER_NAME + "-0/plugins";
+            case MIXED:
+                String round = System.getProperty("tests.rest.bwcsuite_round");
+                if (round.equals("second")) {
+                    return "_nodes/" + CLUSTER_NAME + "-1/plugins";
+                } else if (round.equals("third")) {
+                    return "_nodes/" + CLUSTER_NAME + "-2/plugins";
+                } else {
+                    return "_nodes/" + CLUSTER_NAME + "-0/plugins";
+                }
+            case UPGRADED:
+                return "_nodes/plugins";
+            default:
+                throw new AssertionError("unknown cluster type: " + CLUSTER_TYPE);
+        }
+    }
+
+
     @SuppressWarnings("unchecked")
-    private void assertPluginUpgrade(String uri) throws Exception {
+    private void assertPluginUpgrade() throws Exception {
+        String uri = getUri();
         Map<String, Map<String, Object>> responseMap = (Map<String, Map<String, Object>>) getAsMap(uri).get("nodes");
         for (Map<String, Object> response : responseMap.values()) {
             List<Map<String, Object>> plugins = (List<Map<String, Object>>) response.get("plugins");
