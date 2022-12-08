@@ -125,9 +125,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - uses: actions/setup-java@v1
+    - uses: actions/setup-java@v3
       with:
-        java-version: 11
+        distribution: 'temurin'
+        java-version: '17'
 
     - run: |
         security_plugin_version=$(./gradlew properties -q | grep -E '^version:' | awk '{print $2}')
@@ -156,12 +157,13 @@ jobs:
 
     - name: Verify updateVersion gradle tasks works
       env:
-        ExpectedVersionString: "opensearch_version: 2.1.0-SNAPSHOT"
+        # should be incremented to .1 above current as this just checks whether updateVersion works. If not updated, this job might fail.
+        ExpectedVersionString: "opensearch_version: 3.1.0-SNAPSHOT"
       run:  |
         ## Make sure the current doesn't match the test version
         test "$(./gradlew properties | grep opensearch.version)" != "$ExpectedVersionString"
-        ## Update the new version to 2.1.0
-        ./gradlew clean updateVersion -DnewVersion=2.1.0-SNAPSHOT
+        ## Update the new version to 3.1.0
+        ./gradlew clean updateVersion -DnewVersion=3.1.0-SNAPSHOT
         ## Make sure the version matches expectation
         test "$(./gradlew properties | grep opensearch.version)" = "$ExpectedVersionString"
 
