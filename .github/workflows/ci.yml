@@ -158,12 +158,12 @@ jobs:
     - name: Verify updateVersion gradle tasks works
       env:
         # should be incremented to .1 above current as this just checks whether updateVersion works. If not updated, this job might fail.
-        ExpectedVersionString: "opensearch_version: 3.1.0-SNAPSHOT"
+        ExpectedVersionString: "opensearch_version: 3.0.0-SNAPSHOT"
       run:  |
         ## Make sure the current doesn't match the test version
         test "$(./gradlew properties | grep opensearch.version)" != "$ExpectedVersionString"
-        ## Update the new version to 3.1.0
-        ./gradlew clean updateVersion -DnewVersion=3.1.0-SNAPSHOT
+        ## Update the new version to 3.0.0
+        ./gradlew clean updateVersion -DnewVersion=3.0.0-SNAPSHOT
         ## Make sure the version matches expectation
         test "$(./gradlew properties | grep opensearch.version)" = "$ExpectedVersionString"
 
