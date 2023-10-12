@@ -123,7 +123,7 @@ public class HTTPJwtAuthenticator implements HTTPAuthenticator {
             request.params().get(jwtUrlParameter);
         }
 
-        if (jwtToken == null || jwtToken.length() == 0) {
+        if (jwtToken == null || jwtToken.isEmpty()) {
             if (log.isDebugEnabled()) {
                 log.debug(
                     "No JWT token found in '{}' {} header",
@@ -144,7 +144,7 @@ public class HTTPJwtAuthenticator implements HTTPAuthenticator {
         }
 
         try {
-            final Claims claims = jwtParser.parseClaimsJws(jwtToken).getBody();
+            final Claims claims = jwtParser.parseSignedClaims(jwtToken).getPayload();
 
             final String subject = extractSubject(claims, request);
 

@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -155,7 +156,7 @@ public class OnBehalfOfAuthenticator implements HTTPAuthenticator {
         }
 
         try {
-            final Claims claims = jwtParser.parseClaimsJws(jwtToken).getBody();
+            final Claims claims = jwtParser.parseSignedClaims(jwtToken).getPayload();
 
             final String subject = claims.getSubject();
             if (subject == null) {
@@ -163,7 +164,7 @@ public class OnBehalfOfAuthenticator implements HTTPAuthenticator {
                 return null;
             }
 
-            final String audience = claims.getAudience();
+            final Set<String> audience = claims.getAudience();
             if (audience == null) {
                 log.error("Valid jwt on behalf of token with no audience");
                 return null;
