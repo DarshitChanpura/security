@@ -28,6 +28,7 @@ import org.opensearch.cluster.service.ClusterService;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.core.index.shard.ShardId;
 import org.opensearch.index.IndexService;
+import org.opensearch.index.mapper.IgnoredFieldMapper;
 import org.opensearch.index.mapper.SeqNoFieldMapper;
 import org.opensearch.index.query.QueryShardContext;
 import org.opensearch.index.shard.ShardUtils;
@@ -43,6 +44,19 @@ public class SecurityFlsDlsIndexSearcherWrapper extends SecurityIndexSearcherWra
     private final Set<String> metaFields;
     public static final Set<String> META_FIELDS_BEFORE_7DOT8 = Collections.unmodifiableSet(
         new HashSet<>(Arrays.asList("_timestamp", "_ttl", "_type"))
+    );
+
+    // The following fields will be used when MapperService is not available
+    private static final Set<String> DEFAULT_META_FIELDS = Sets.newHashSet(
+        "_source",
+        "_version",
+        "_field_names",
+        "_seq_no",
+        "_id",
+        IgnoredFieldMapper.NAME,
+        "_index",
+        "_routing",
+        "_size"
     );
     private final ClusterService clusterService;
     private final IndexService indexService;
@@ -62,7 +76,13 @@ public class SecurityFlsDlsIndexSearcherWrapper extends SecurityIndexSearcherWra
         final Salt salt
     ) {
         super(indexService, settings, adminDNs, evaluator);
-        Set<String> metadataFieldsCopy = new HashSet<>(indexService.mapperService().getMetadataFields());
+        Set<String> metadataFieldsCopy = new HashSet<>();
+        if (indexService.mapperService() != null) {
+            metadataFieldsCopy.addAll(indexService.mapperService().getMetadataFields());
+        } else {
+            metadataFieldsCopy.addAll(DEFAULT_META_FIELDS);
+        }
+
         SeqNoFieldMapper.SequenceIDFields sequenceIDFields = SeqNoFieldMapper.SequenceIDFields.emptySeqID();
         metadataFieldsCopy.add(sequenceIDFields.primaryTerm.name());
         metadataFieldsCopy.addAll(META_FIELDS_BEFORE_7DOT8);
@@ -74,7 +94,7 @@ public class SecurityFlsDlsIndexSearcherWrapper extends SecurityIndexSearcherWra
         this.dlsQueryParser = new DlsQueryParser(indexService.xContentRegistry());
         final boolean allowNowinDlsQueries = settings.getAsBoolean(ConfigConstants.SECURITY_UNSUPPORTED_ALLOW_NOW_IN_DLS, false);
         if (allowNowinDlsQueries) {
-            nowInMillis = () -> System.currentTimeMillis();
+            nowInMillis = System::currentTimeMillis;
         } else {
             nowInMillis = () -> { throw new IllegalArgumentException("'now' is not allowed in DLS queries"); };
         }
