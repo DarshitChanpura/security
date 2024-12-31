@@ -287,6 +287,7 @@ public class ConfigConstants {
     public static final String SECURITY_SSL_DUAL_MODE_SKIP_SECURITY = OPENDISTRO_SECURITY_CONFIG_PREFIX + "passive_security";
     public static final String LEGACY_OPENDISTRO_SECURITY_CONFIG_SSL_DUAL_MODE_ENABLED = "opendistro_security_config.ssl_dual_mode_enabled";
     public static final String SECURITY_SSL_CERT_RELOAD_ENABLED = "plugins.security.ssl_cert_reload_enabled";
+    public static final String SECURITY_SSL_CERTIFICATES_HOT_RELOAD_ENABLED = "plugins.security.ssl.certificates_hot_reload.enabled";
     public static final String SECURITY_DISABLE_ENVVAR_REPLACEMENT = "plugins.security.disable_envvar_replacement";
     public static final String SECURITY_DFM_EMPTY_OVERRIDES_ALL = "plugins.security.dfm_empty_overrides_all";
 
@@ -369,6 +370,9 @@ public class ConfigConstants {
 
     // Variable for initial admin password support
     public static final String OPENSEARCH_INITIAL_ADMIN_PASSWORD = "OPENSEARCH_INITIAL_ADMIN_PASSWORD";
+
+    // Resource sharing index
+    public static final String OPENSEARCH_RESOURCE_SHARING_INDEX = ".opensearch_resource_sharing";
 
     public static Set<String> getSettingAsSet(
         final Settings settings,
