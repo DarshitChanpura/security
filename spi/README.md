@@ -1,6 +1,6 @@
 # Resource Sharing and Access Control SPI
 
-This SPI provides interfaces to implement Resource Sharing and Access Control. 
+This SPI provides interfaces to implement Resource Sharing and Access Control.
 
 ## License
 
