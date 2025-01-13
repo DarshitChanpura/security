@@ -7,7 +7,7 @@ on:
         - 'main'
         - '1.*'
         - '2.*'
-        - 'resource-sharing-spi' # temporary commit, must be reverted before merge
+        - 'feature/resource-permissions' # temporary commit, must be reverted before merge
 
 jobs:
   build-and-publish-snapshots:
