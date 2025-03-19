@@ -122,6 +122,8 @@ public class ConfigConstants {
     // persistent header. This header is set once and cannot be stashed
     public static final String OPENDISTRO_SECURITY_AUTHENTICATED_USER = OPENDISTRO_SECURITY_CONFIG_PREFIX + "authenticated_user";
 
+    public static final String OPENDISTRO_SECURITY_INITIATING_USER = OPENDISTRO_SECURITY_CONFIG_PREFIX + "_initiating_user";
+
     public static final String OPENDISTRO_SECURITY_USER_INFO_THREAD_CONTEXT = OPENDISTRO_SECURITY_CONFIG_PREFIX + "user_info";
 
     public static final String OPENDISTRO_SECURITY_INJECTED_USER = "injected_user";
