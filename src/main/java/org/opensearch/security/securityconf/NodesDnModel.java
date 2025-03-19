@@ -13,7 +13,7 @@ package org.opensearch.security.securityconf;
 
 import java.util.Map;
 
-import org.opensearch.security.common.support.WildcardMatcher;
+import org.opensearch.security.support.WildcardMatcher;
 
 public abstract class NodesDnModel {
     public abstract Map<String, WildcardMatcher> getNodesDn();

@@ -34,8 +34,8 @@ import org.junit.rules.ExpectedException;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.security.auditlog.AuditTestUtils;
 import org.opensearch.security.auditlog.config.AuditConfig;
-import org.opensearch.security.common.support.DefaultObjectMapper;
 import org.opensearch.security.compliance.ComplianceConfig;
+import org.opensearch.security.support.DefaultObjectMapper;
 import org.opensearch.security.test.helper.file.FileHelper;
 import org.opensearch.security.test.helper.rest.RestHelper;
 
@@ -43,8 +43,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.is;
 import static org.opensearch.security.OpenSearchSecurityPlugin.PLUGINS_PREFIX;
-import static org.opensearch.security.common.support.DefaultObjectMapper.readTree;
-import static org.opensearch.security.common.support.DefaultObjectMapper.writeValueAsString;
+import static org.opensearch.security.support.DefaultObjectMapper.readTree;
+import static org.opensearch.security.support.DefaultObjectMapper.writeValueAsString;
 import static org.junit.Assert.assertTrue;
 
 public class AuditApiActionTest extends AbstractRestApiUnitTest {

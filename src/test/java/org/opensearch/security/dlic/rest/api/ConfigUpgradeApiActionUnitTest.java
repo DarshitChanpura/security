@@ -26,11 +26,11 @@ import org.opensearch.common.xcontent.XContentFactory;
 import org.opensearch.rest.RestChannel;
 import org.opensearch.rest.RestRequest;
 import org.opensearch.rest.RestResponse;
-import org.opensearch.security.common.dlic.rest.support.Utils;
-import org.opensearch.security.common.support.DefaultObjectMapper;
+import org.opensearch.security.dlic.rest.support.Utils;
 import org.opensearch.security.dlic.rest.validation.ValidationResult;
 import org.opensearch.security.securityconf.impl.CType;
 import org.opensearch.security.securityconf.impl.SecurityDynamicConfiguration;
+import org.opensearch.security.support.DefaultObjectMapper;
 import org.opensearch.transport.client.Client;
 
 import org.mockito.Mock;

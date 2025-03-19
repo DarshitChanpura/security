@@ -33,8 +33,7 @@ import java.util.List;
 import com.google.common.base.Strings;
 
 import org.opensearch.common.util.concurrent.ThreadContext;
-import org.opensearch.security.common.support.ConfigConstants;
-import org.opensearch.security.common.user.User;
+import org.opensearch.security.user.User;
 
 public class HeaderHelper {
 

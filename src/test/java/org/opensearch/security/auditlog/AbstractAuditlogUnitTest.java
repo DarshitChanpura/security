@@ -20,7 +20,7 @@ import org.opensearch.common.settings.Settings;
 import org.opensearch.security.auditlog.config.AuditConfig;
 import org.opensearch.security.auditlog.impl.AuditMessage;
 import org.opensearch.security.auditlog.routing.AuditMessageRouter;
-import org.opensearch.security.common.support.DefaultObjectMapper;
+import org.opensearch.security.support.DefaultObjectMapper;
 import org.opensearch.security.test.DynamicSecurityConfig;
 import org.opensearch.security.test.SingleClusterTest;
 import org.opensearch.security.test.helper.file.FileHelper;

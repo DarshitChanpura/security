@@ -15,14 +15,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
-import org.opensearch.security.common.auth.UserSubjectImpl;
-import org.opensearch.security.common.user.User;
+import org.opensearch.security.user.User;
 import org.opensearch.threadpool.TestThreadPool;
 import org.opensearch.threadpool.ThreadPool;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.opensearch.security.common.support.ConfigConstants.OPENDISTRO_SECURITY_USER;
+import static org.opensearch.security.support.ConfigConstants.OPENDISTRO_SECURITY_USER;
 import static org.junit.Assert.assertNull;
 
 public class UserSubjectImplTests {

@@ -35,8 +35,6 @@ import org.opensearch.index.mapper.SeqNoFieldMapper;
 import org.opensearch.index.query.QueryShardContext;
 import org.opensearch.index.shard.ShardUtils;
 import org.opensearch.security.auditlog.AuditLog;
-import org.opensearch.security.common.configuration.AdminDNs;
-import org.opensearch.security.common.support.ConfigConstants;
 import org.opensearch.security.compliance.ComplianceIndexingOperationListener;
 import org.opensearch.security.privileges.DocumentAllowList;
 import org.opensearch.security.privileges.PrivilegesEvaluationContext;
@@ -47,6 +45,7 @@ import org.opensearch.security.privileges.dlsfls.DlsFlsProcessedConfig;
 import org.opensearch.security.privileges.dlsfls.DlsRestriction;
 import org.opensearch.security.privileges.dlsfls.FieldMasking;
 import org.opensearch.security.privileges.dlsfls.FieldPrivileges;
+import org.opensearch.security.support.ConfigConstants;
 
 public class SecurityFlsDlsIndexSearcherWrapper extends SystemIndexSearcherWrapper {
 
