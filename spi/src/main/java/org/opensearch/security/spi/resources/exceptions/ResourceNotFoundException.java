@@ -41,6 +41,6 @@ public final class ResourceNotFoundException extends ResourceSharingException {
 
     @Override
     public RestStatus status() {
-        return RestStatus.NOT_IMPLEMENTED;
+        return RestStatus.NOT_FOUND;
     }
 }
