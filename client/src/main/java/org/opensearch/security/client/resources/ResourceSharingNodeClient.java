@@ -16,7 +16,6 @@ import org.apache.logging.log4j.Logger;
 
 import org.opensearch.common.settings.Settings;
 import org.opensearch.core.action.ActionListener;
-import org.opensearch.core.rest.RestStatus;
 import org.opensearch.security.resources.rest.ResourceAccessAction;
 import org.opensearch.security.resources.rest.ResourceAccessRequest;
 import org.opensearch.security.resources.rest.ResourceAccessResponse;
@@ -162,7 +161,7 @@ public final class ResourceSharingNodeClient implements ResourceSharingClient {
             String message = (isSecurityDisabled ? "Security Plugin" : "Resource Access Control feature") + " is disabled.";
 
             log.warn("{} {}", message, disabledMessage);
-            listener.onFailure(new ResourceSharingFeatureDisabledException(message + " " + disabledMessage, RestStatus.NOT_IMPLEMENTED));
+            listener.onFailure(new ResourceSharingFeatureDisabledException(message + " " + disabledMessage));
             return true;
         }
         return false;
