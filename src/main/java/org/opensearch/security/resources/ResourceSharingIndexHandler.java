@@ -66,6 +66,7 @@ import org.opensearch.search.builder.SearchSourceBuilder;
 import org.opensearch.security.spi.resources.ShareableResource;
 import org.opensearch.security.spi.resources.ShareableResourceParser;
 import org.opensearch.security.spi.resources.exceptions.ResourceSharingException;
+import org.opensearch.security.spi.resources.exceptions.UnauthorizedResourceAccessException;
 import org.opensearch.security.spi.resources.sharing.CreatedBy;
 import org.opensearch.security.spi.resources.sharing.RecipientType;
 import org.opensearch.security.spi.resources.sharing.ResourceSharing;
@@ -763,7 +764,9 @@ public class ResourceSharingIndexHandler {
 
                 LOGGER.error("User {} is not authorized to share resource {}", requestUserName, resourceId);
                 listener.onFailure(
-                    new ResourceSharingException("User " + requestUserName + " is not authorized to share resource " + resourceId)
+                    new UnauthorizedResourceAccessException(
+                        "User " + requestUserName + " is not authorized to share resource " + resourceId
+                    )
                 );
             }
 
@@ -912,7 +915,7 @@ public class ResourceSharingIndexHandler {
                 // Only admin or the creator of the resource is currently allowed to revoke access
                 if (!isAdmin && currentSharingInfo != null && !currentSharingInfo.getCreatedBy().getCreator().equals(requestUserName)) {
                     listener.onFailure(
-                        new ResourceSharingException(
+                        new UnauthorizedResourceAccessException(
                             "User " + requestUserName + " is not authorized to revoke access to resource " + resourceId
                         )
                     );
