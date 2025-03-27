@@ -16,8 +16,8 @@ import java.util.StringJoiner;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
 
+import org.opensearch.security.DefaultObjectMapper;
 import org.opensearch.security.dlic.rest.api.Endpoint;
-import org.opensearch.security.support.DefaultObjectMapper;
 import org.opensearch.test.framework.cluster.TestRestClient;
 
 import static org.opensearch.security.api.PatchPayloadHelper.patch;

@@ -31,7 +31,7 @@ import org.opensearch.core.rest.RestStatus;
 import org.opensearch.core.xcontent.ToXContent;
 import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.rest.RestRequest;
-import org.opensearch.security.support.DefaultObjectMapper;
+import org.opensearch.security.DefaultObjectMapper;
 
 import com.flipkart.zjsonpatch.JsonDiff;
 

@@ -46,8 +46,8 @@ import org.opensearch.core.xcontent.XContentParser;
 import org.opensearch.rest.NamedRoute;
 import org.opensearch.rest.RestHandler.DeprecatedRoute;
 import org.opensearch.rest.RestHandler.Route;
+import org.opensearch.security.DefaultObjectMapper;
 import org.opensearch.security.support.ConfigConstants;
-import org.opensearch.security.support.DefaultObjectMapper;
 import org.opensearch.security.user.User;
 
 import static org.opensearch.core.xcontent.DeprecationHandler.THROW_UNSUPPORTED_OPERATION;

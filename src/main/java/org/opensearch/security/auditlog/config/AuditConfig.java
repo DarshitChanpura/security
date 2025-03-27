@@ -30,15 +30,15 @@ import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import org.apache.logging.log4j.Logger;
 
 import org.opensearch.common.settings.Settings;
+import org.opensearch.security.DefaultObjectMapper;
 import org.opensearch.security.auditlog.impl.AuditCategory;
 import org.opensearch.security.compliance.ComplianceConfig;
 import org.opensearch.security.dlic.rest.support.Utils;
 import org.opensearch.security.support.ConfigConstants;
-import org.opensearch.security.support.DefaultObjectMapper;
 import org.opensearch.security.support.WildcardMatcher;
 
+import static org.opensearch.security.DefaultObjectMapper.getOrDefault;
 import static org.opensearch.security.support.ConfigConstants.SECURITY_AUDIT_CONFIG_DEFAULT;
-import static org.opensearch.security.support.DefaultObjectMapper.getOrDefault;
 
 /**
  * Class represents configuration for audit logging.

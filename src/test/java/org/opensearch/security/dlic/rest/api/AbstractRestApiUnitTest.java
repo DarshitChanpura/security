@@ -23,9 +23,9 @@ import org.apache.http.HttpStatus;
 import org.junit.Assert;
 
 import org.opensearch.common.settings.Settings;
+import org.opensearch.security.DefaultObjectMapper;
 import org.opensearch.security.auditlog.AuditTestUtils;
 import org.opensearch.security.dlic.rest.validation.PasswordValidator;
-import org.opensearch.security.support.DefaultObjectMapper;
 import org.opensearch.security.test.DynamicSecurityConfig;
 import org.opensearch.security.test.SingleClusterTest;
 import org.opensearch.security.test.helper.file.FileHelper;

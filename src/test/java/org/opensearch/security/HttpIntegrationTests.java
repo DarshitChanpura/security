@@ -59,7 +59,7 @@ import org.opensearch.transport.client.Client;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.opensearch.security.support.DefaultObjectMapper.readTree;
+import static org.opensearch.security.DefaultObjectMapper.readTree;
 
 public class HttpIntegrationTests extends SingleClusterTest {
 

@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.core.rest.RestStatus;
 import org.opensearch.rest.RestRequest;
+import org.opensearch.security.DefaultObjectMapper;
 import org.opensearch.security.configuration.ConfigurationMap;
 import org.opensearch.security.dlic.rest.validation.ValidationResult;
 import org.opensearch.security.hasher.PasswordHasherFactory;
@@ -29,7 +30,6 @@ import org.opensearch.security.securityconf.impl.SecurityDynamicConfiguration;
 import org.opensearch.security.securityconf.impl.v7.InternalUserV7;
 import org.opensearch.security.securityconf.impl.v7.RoleV7;
 import org.opensearch.security.support.ConfigConstants;
-import org.opensearch.security.support.DefaultObjectMapper;
 import org.opensearch.security.user.UserService;
 import org.opensearch.security.util.FakeRestRequest;
 

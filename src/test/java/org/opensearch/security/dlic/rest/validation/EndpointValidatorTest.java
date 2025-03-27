@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import org.opensearch.core.rest.RestStatus;
+import org.opensearch.security.DefaultObjectMapper;
 import org.opensearch.security.dlic.rest.api.Endpoint;
 import org.opensearch.security.dlic.rest.api.RestApiAdminPrivilegesEvaluator;
 import org.opensearch.security.dlic.rest.api.SecurityConfiguration;
@@ -27,7 +28,6 @@ import org.opensearch.security.securityconf.impl.CType;
 import org.opensearch.security.securityconf.impl.SecurityDynamicConfiguration;
 import org.opensearch.security.securityconf.impl.v7.ActionGroupsV7;
 import org.opensearch.security.securityconf.impl.v7.RoleV7;
-import org.opensearch.security.support.DefaultObjectMapper;
 
 import org.mockito.Mock;
 import org.mockito.Mockito;

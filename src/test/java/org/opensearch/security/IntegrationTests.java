@@ -60,7 +60,7 @@ import io.netty.handler.ssl.OpenSsl;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.opensearch.security.support.DefaultObjectMapper.readTree;
+import static org.opensearch.security.DefaultObjectMapper.readTree;
 
 public class IntegrationTests extends SingleClusterTest {
 

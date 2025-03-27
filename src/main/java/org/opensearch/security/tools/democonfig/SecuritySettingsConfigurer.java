@@ -36,7 +36,7 @@ import org.opensearch.security.support.ConfigConstants;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
-import static org.opensearch.security.support.DefaultObjectMapper.YAML_MAPPER;
+import static org.opensearch.security.DefaultObjectMapper.YAML_MAPPER;
 
 /**
  * This class updates the security related configuration, as needed.

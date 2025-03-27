@@ -24,7 +24,7 @@
  * GitHub history for details.
  */
 
-package org.opensearch.security.support;
+package org.opensearch.security;
 
 import java.io.IOException;
 import java.security.AccessController;

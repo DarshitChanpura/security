@@ -17,6 +17,7 @@ import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import org.opensearch.core.common.Strings;
+import org.opensearch.security.DefaultObjectMapper;
 
 public class JsonFlattener {
 
