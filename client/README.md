@@ -142,7 +142,7 @@ resourceSharingClient.verifyResourceAccess(
 
 #### **Method Signature:**
 ```java
-void shareResource(String resourceId, String resourceIndex, Map<String, Object> shareWith, ActionListener<ResourceSharing> listener);
+void shareResource(String resourceId, String resourceIndex, SharedWithActionGroup.ActionGroupRecipients recipients, ActionListener<ResourceSharing> listener);
 ```
 
 #### **Example Usage:**
@@ -167,7 +167,7 @@ resourceSharingClient.shareResource(
 
 #### **Method Signature:**
 ```java
-void revokeResourceAccess(String resourceId, String resourceIndex, Map<String, Object> entitiesToRevoke, ActionListener<ResourceSharing> listener);
+void revokeResourceAccess(String resourceId, String resourceIndex, SharedWithActionGroup.ActionGroupRecipients entitiesToRevoke, ActionListener<ResourceSharing> listener);
 ```
 
 #### **Example Usage:**
@@ -191,7 +191,7 @@ resourceSharingClient.revokeResourceAccess(
 
 #### **Method Signature:**
 ```java
-void listAllAccessibleResources(String resourceIndex, ActionListener<Set<? extends Resource>> listener);
+void listAllAccessibleResources(String resourceIndex, ActionListener<Set<? extends ShareableResource>> listener);
 ```
 
 #### **Example Usage:**
