@@ -564,7 +564,6 @@ allprojects {
         integrationTestImplementation 'com.selectivem.collections:special-collections-complete:1.4.0'
         integrationTestImplementation "org.opensearch.plugin:lang-painless:${opensearch_version}"
         integrationTestImplementation group: 'org.opensearch', name:'opensearch-resource-sharing-spi', version:"${opensearch_build}"
-        integrationTestImplementation project(path: ":${rootProject.name}-client", configuration: 'shadow')
 
     }
 }
