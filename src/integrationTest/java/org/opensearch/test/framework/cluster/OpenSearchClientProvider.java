@@ -70,12 +70,12 @@ import org.opensearch.test.framework.certificate.TestCertificates;
 import static org.opensearch.test.framework.cluster.TestRestClientConfiguration.getBasicAuthHeader;
 
 /**
-* OpenSearchClientProvider provides methods to get a REST client for an underlying cluster or node.
-*
-* This interface is implemented by both LocalCluster and LocalOpenSearchCluster.Node. Thus, it is possible to get a
-* REST client for a whole cluster (without choosing the node it is operating on) or to get a REST client for a specific
-* node.
-*/
+ * OpenSearchClientProvider provides methods to get a REST client for an underlying cluster or node.
+ *
+ * This interface is implemented by both LocalCluster and LocalOpenSearchCluster.Node. Thus, it is possible to get a
+ * REST client for a whole cluster (without choosing the node it is operating on) or to get a REST client for a specific
+ * node.
+ */
 public interface OpenSearchClientProvider {
 
     String getClusterName();
@@ -92,12 +92,12 @@ public interface OpenSearchClientProvider {
     }
 
     /**
-    * Returns a REST client that sends requests with basic authentication for the specified User object. Optionally,
-    * additional HTTP headers can be specified which will be sent with each request.
-    *
-    * This method should be usually preferred. The other getRestClient() methods shall be only used for specific
-    * situations.
-    */
+     * Returns a REST client that sends requests with basic authentication for the specified User object. Optionally,
+     * additional HTTP headers can be specified which will be sent with each request.
+     *
+     * This method should be usually preferred. The other getRestClient() methods shall be only used for specific
+     * situations.
+     */
     default TestRestClient getRestClient(UserCredentialsHolder user, CertificateData useCertificateData, Header... headers) {
         return getRestClient(user.getName(), user.getPassword(), useCertificateData, headers);
     }
@@ -128,8 +128,8 @@ public interface OpenSearchClientProvider {
 
         BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(
-            new AuthScope(null, -1),
-            new UsernamePasswordCredentials(user.getName(), user.getPassword().toCharArray())
+                new AuthScope(null, -1),
+                new UsernamePasswordCredentials(user.getName(), user.getPassword().toCharArray())
         );
 
         return getRestHighLevelClient(credentialsProvider, defaultHeaders);
@@ -140,21 +140,21 @@ public interface OpenSearchClientProvider {
     }
 
     default RestHighLevelClient getRestHighLevelClient(
-        BasicCredentialsProvider credentialsProvider,
-        Collection<? extends Header> defaultHeaders
+            BasicCredentialsProvider credentialsProvider,
+            Collection<? extends Header> defaultHeaders
     ) {
         RestClientBuilder.HttpClientConfigCallback configCallback = httpClientBuilder -> {
             TlsStrategy tlsStrategy = ClientTlsStrategyBuilder.create()
-                .setSslContext(getSSLContext())
-                .setHostnameVerifier(NoopHostnameVerifier.INSTANCE)
-                // See please https://issues.apache.org/jira/browse/HTTPCLIENT-2219
-                .setTlsDetailsFactory(new Factory<SSLEngine, TlsDetails>() {
-                    @Override
-                    public TlsDetails create(final SSLEngine sslEngine) {
-                        return new TlsDetails(sslEngine.getSession(), sslEngine.getApplicationProtocol());
-                    }
-                })
-                .build();
+                    .setSslContext(getSSLContext())
+                    .setHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+                    // See please https://issues.apache.org/jira/browse/HTTPCLIENT-2219
+                    .setTlsDetailsFactory(new Factory<SSLEngine, TlsDetails>() {
+                        @Override
+                        public TlsDetails create(final SSLEngine sslEngine) {
+                            return new TlsDetails(sslEngine.getSession(), sslEngine.getApplicationProtocol());
+                        }
+                    })
+                    .build();
 
             final AsyncClientConnectionManager cm = PoolingAsyncClientConnectionManagerBuilder.create().setTlsStrategy(tlsStrategy).build();
 
@@ -169,7 +169,7 @@ public interface OpenSearchClientProvider {
 
         InetSocketAddress httpAddress = getHttpAddress();
         RestClientBuilder builder = RestClient.builder(new HttpHost("https", httpAddress.getHostString(), httpAddress.getPort()))
-            .setHttpClientConfigCallback(configCallback);
+                .setHttpClientConfigCallback(configCallback);
 
         return new RestHighLevelClient(builder);
     }
@@ -180,12 +180,12 @@ public interface OpenSearchClientProvider {
     }
 
     /**
-    * Returns a REST client that sends requests with basic authentication for the specified user name and password. Optionally,
-    * additional HTTP headers can be specified which will be sent with each request.
-    *
-    * Normally, you should use the method with the User object argument instead. Use this only if you need more
-    * control over username and password - for example, when you want to send a wrong password.
-    */
+     * Returns a REST client that sends requests with basic authentication for the specified user name and password. Optionally,
+     * additional HTTP headers can be specified which will be sent with each request.
+     *
+     * Normally, you should use the method with the User object argument instead. Use this only if you need more
+     * control over username and password - for example, when you want to send a wrong password.
+     */
     default TestRestClient getRestClient(String user, String password, Header... headers) {
         return createGenericClientRestClient(new TestRestClientConfiguration().username(user).password(password).headers(headers));
     }
@@ -200,9 +200,9 @@ public interface OpenSearchClientProvider {
     }
 
     /**
-    * Returns a REST client. You can specify additional HTTP headers that will be sent with each request. Use this
-    * method to test non-basic authentication, such as JWT bearer authentication.
-    */
+     * Returns a REST client. You can specify additional HTTP headers that will be sent with each request. Use this
+     * method to test non-basic authentication, such as JWT bearer authentication.
+     */
     default TestRestClient getRestClient(CertificateData useCertificateData, Header... headers) {
         return getRestClient(Arrays.asList(headers), useCertificateData);
     }
@@ -220,22 +220,26 @@ public interface OpenSearchClientProvider {
         return createGenericClientRestClient(headers, useCertificateData, null);
     }
 
+    default TestRestClient getSecurityDisabledRestClient() {
+        return new TestRestClient(getHttpAddress(), List.of(), getSSLContext(null), null, false, false);
+    }
+
     default TestRestClient createGenericClientRestClient(
-        List<Header> headers,
-        CertificateData useCertificateData,
-        InetAddress sourceInetAddress
+            List<Header> headers,
+            CertificateData useCertificateData,
+            InetAddress sourceInetAddress
     ) {
         return new TestRestClient(getHttpAddress(), headers, getSSLContext(useCertificateData), sourceInetAddress, true, false);
     }
 
     default TestRestClient createGenericClientRestClient(TestRestClientConfiguration configuration) {
         return new TestRestClient(
-            getHttpAddress(),
-            configuration.getHeaders(),
-            getSSLContext(),
-            configuration.getSourceInetAddress(),
-            true,
-            false
+                getHttpAddress(),
+                configuration.getHeaders(),
+                getSSLContext(),
+                configuration.getSourceInetAddress(),
+                true,
+                false
         );
     }
 
