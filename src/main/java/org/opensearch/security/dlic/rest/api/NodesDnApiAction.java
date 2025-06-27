@@ -56,7 +56,7 @@ import static org.opensearch.security.dlic.rest.support.Utils.addRoutesPrefix;
  *
  * See {@link NodesDnApiTest} for usage examples.
  */
-public class NodesDnApiAction extends AbstractApiAction {
+public class NodesDnApiAction extends AbstractConfigApiAction {
 
     public static final String STATIC_OPENSEARCH_YML_NODES_DN = "STATIC_OPENSEARCH_YML_NODES_DN";
     private final List<String> staticNodesDnFromEsYml;

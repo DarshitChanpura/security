@@ -27,7 +27,7 @@ import static org.opensearch.security.dlic.rest.support.Utils.OPENDISTRO_API_DEP
 import static org.opensearch.security.dlic.rest.support.Utils.addLegacyRoutesPrefix;
 import static org.opensearch.security.dlic.rest.support.Utils.addRoutesPrefix;
 
-public class AuthTokenProcessorAction extends AbstractApiAction {
+public class AuthTokenProcessorAction extends AbstractConfigApiAction {
 
     private static final List<Route> routes = addRoutesPrefix(Collections.singletonList(new Route(Method.POST, "/authtoken")));
 

@@ -27,7 +27,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class RateLimitersApiActionValidationTest extends AbstractApiActionValidationTest {
+public class RateLimitersApiActionValidationTest extends AbstractConfigApiActionValidationTest {
 
     @Test
     public void validateAllowedFields() throws IOException {

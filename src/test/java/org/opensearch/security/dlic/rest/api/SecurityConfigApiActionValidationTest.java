@@ -23,7 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
-public class SecurityConfigApiActionValidationTest extends AbstractApiActionValidationTest {
+public class SecurityConfigApiActionValidationTest extends AbstractConfigApiActionValidationTest {
 
     @Test
     public void accessHandlerForDefaultSettings() {

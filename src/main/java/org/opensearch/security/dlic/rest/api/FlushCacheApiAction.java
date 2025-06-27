@@ -34,7 +34,7 @@ import static org.opensearch.security.dlic.rest.support.Utils.OPENDISTRO_API_DEP
 import static org.opensearch.security.dlic.rest.support.Utils.addLegacyRoutesPrefix;
 import static org.opensearch.security.dlic.rest.support.Utils.addRoutesPrefix;
 
-public class FlushCacheApiAction extends AbstractApiAction {
+public class FlushCacheApiAction extends AbstractConfigApiAction {
 
     private final static Logger LOGGER = LogManager.getLogger(FlushCacheApiAction.class);
 

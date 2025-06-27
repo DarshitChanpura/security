@@ -67,7 +67,7 @@ import static org.opensearch.security.dlic.rest.support.Utils.addLegacyRoutesPre
 import static org.opensearch.security.dlic.rest.support.Utils.addRoutesPrefix;
 import static org.opensearch.security.dlic.rest.support.Utils.withIOException;
 
-public class ConfigUpgradeApiAction extends AbstractApiAction {
+public class ConfigUpgradeApiAction extends AbstractConfigApiAction {
 
     private final static Logger LOGGER = LogManager.getLogger(ConfigUpgradeApiAction.class);
 

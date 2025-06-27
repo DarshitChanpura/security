@@ -25,7 +25,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-public class RolesApiActionValidationTest extends AbstractApiActionValidationTest {
+public class RolesApiActionValidationTest extends AbstractConfigApiActionValidationTest {
 
     @Test
     public void isAllowedToChangeImmutableEntity() throws Exception {

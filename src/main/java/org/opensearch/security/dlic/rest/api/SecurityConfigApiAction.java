@@ -36,7 +36,7 @@ import static org.opensearch.security.dlic.rest.support.Utils.addLegacyRoutesPre
 import static org.opensearch.security.dlic.rest.support.Utils.addRoutesPrefix;
 import static org.opensearch.security.support.ConfigConstants.SECURITY_RESTAPI_ADMIN_ENABLED;
 
-public class SecurityConfigApiAction extends AbstractApiAction {
+public class SecurityConfigApiAction extends AbstractConfigApiAction {
 
     private static final List<Route> routes = addRoutesPrefix(
         List.of(

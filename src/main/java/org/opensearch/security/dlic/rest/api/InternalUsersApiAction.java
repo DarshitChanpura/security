@@ -51,7 +51,7 @@ import static org.opensearch.security.dlic.rest.support.Utils.OPENDISTRO_API_DEP
 import static org.opensearch.security.dlic.rest.support.Utils.addLegacyRoutesPrefix;
 import static org.opensearch.security.dlic.rest.support.Utils.addRoutesPrefix;
 
-public class InternalUsersApiAction extends AbstractApiAction {
+public class InternalUsersApiAction extends AbstractConfigApiAction {
 
     private final PasswordHasher passwordHasher;
 

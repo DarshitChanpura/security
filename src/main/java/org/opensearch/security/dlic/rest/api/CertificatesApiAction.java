@@ -34,7 +34,7 @@ import static org.opensearch.security.dlic.rest.api.RestApiAdminPrivilegesEvalua
 import static org.opensearch.security.dlic.rest.support.Utils.PLUGIN_API_ROUTE_PREFIX;
 import static org.opensearch.security.dlic.rest.support.Utils.addRoutesPrefix;
 
-public class CertificatesApiAction extends AbstractApiAction {
+public class CertificatesApiAction extends AbstractConfigApiAction {
 
     private final static Logger LOGGER = LogManager.getLogger(CertificatesApiAction.class);
 

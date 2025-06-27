@@ -26,7 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
-public class ActionGroupsApiActionValidationTest extends AbstractApiActionValidationTest {
+public class ActionGroupsApiActionValidationTest extends AbstractConfigApiActionValidationTest {
 
     @Before
     public void setupRoles() throws Exception {

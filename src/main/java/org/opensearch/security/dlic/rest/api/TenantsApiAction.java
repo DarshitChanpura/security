@@ -47,7 +47,7 @@ import static org.opensearch.security.dlic.rest.support.Utils.OPENDISTRO_API_DEP
 import static org.opensearch.security.dlic.rest.support.Utils.addLegacyRoutesPrefix;
 import static org.opensearch.security.dlic.rest.support.Utils.addRoutesPrefix;
 
-public class TenantsApiAction extends AbstractApiAction {
+public class TenantsApiAction extends AbstractConfigApiAction {
 
     private static final List<Route> routes = addRoutesPrefix(
         ImmutableList.of(

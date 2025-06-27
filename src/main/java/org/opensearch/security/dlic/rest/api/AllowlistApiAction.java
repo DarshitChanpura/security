@@ -71,7 +71,7 @@ import static org.opensearch.security.dlic.rest.api.RequestHandler.methodNotImpl
  * be used to populate the index.
  * <p>
  */
-public class AllowlistApiAction extends AbstractApiAction {
+public class AllowlistApiAction extends AbstractConfigApiAction {
 
     private static final List<Route> routes = ImmutableList.of(
         new Route(RestRequest.Method.GET, "/_plugins/_security/api/allowlist"),

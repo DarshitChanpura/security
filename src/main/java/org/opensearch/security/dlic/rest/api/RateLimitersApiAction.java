@@ -53,7 +53,7 @@ import static org.opensearch.security.securityconf.impl.v7.ConfigV7.MAX_BLOCKED_
 import static org.opensearch.security.securityconf.impl.v7.ConfigV7.MAX_TRACKED_CLIENTS_DEFAULT;
 import static org.opensearch.security.securityconf.impl.v7.ConfigV7.TIME_WINDOW_SECONDS_DEFAULT;
 
-public class RateLimitersApiAction extends AbstractApiAction {
+public class RateLimitersApiAction extends AbstractConfigApiAction {
 
     public static final String IP_TYPE = "ip";
 

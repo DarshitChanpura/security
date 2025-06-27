@@ -32,7 +32,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 
-public class AuditApiActionRequestContentValidatorTest extends AbstractApiActionValidationTest {
+public class AuditApiActionRequestContentValidatorTest extends AbstractConfigApiActionValidationTest {
 
     @Test
     public void validateAuditDisabledRestCategories() throws IOException {

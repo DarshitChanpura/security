@@ -54,7 +54,7 @@ import static org.opensearch.security.dlic.rest.support.Utils.addRoutesPrefix;
  * PUT _plugins/_security/api/ssl/{certType}/reloadcerts
  */
 @Deprecated
-public class SecuritySSLCertsApiAction extends AbstractApiAction {
+public class SecuritySSLCertsApiAction extends AbstractConfigApiAction {
 
     private final static Logger LOGGER = LogManager.getLogger(SecuritySSLCertsApiAction.class);
 

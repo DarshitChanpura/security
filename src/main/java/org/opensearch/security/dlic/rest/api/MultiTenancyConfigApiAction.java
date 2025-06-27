@@ -50,7 +50,7 @@ import static org.opensearch.security.dlic.rest.support.Utils.OPENDISTRO_API_DEP
 import static org.opensearch.security.dlic.rest.support.Utils.addLegacyRoutesPrefix;
 import static org.opensearch.security.dlic.rest.support.Utils.addRoutesPrefix;
 
-public class MultiTenancyConfigApiAction extends AbstractApiAction {
+public class MultiTenancyConfigApiAction extends AbstractConfigApiAction {
 
     public static final String DEFAULT_TENANT_JSON_PROPERTY = "default_tenant";
     public static final String PRIVATE_TENANT_ENABLED_JSON_PROPERTY = "private_tenant_enabled";

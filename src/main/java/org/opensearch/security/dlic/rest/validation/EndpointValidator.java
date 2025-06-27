@@ -34,28 +34,17 @@ public interface EndpointValidator {
         if (Objects.isNull(endpoint())) {
             return "";
         }
-        switch (endpoint()) {
-            case ACCOUNT:
-                return "account";
-            case ACTIONGROUPS:
-                return "actiongroup";
-            case ALLOWLIST:
-            case AUDIT:
-            case CONFIG:
-                return "config";
-            case INTERNALUSERS:
-                return "user";
-            case NODESDN:
-                return "nodesdn";
-            case ROLES:
-                return "role";
-            case ROLESMAPPING:
-                return "rolesmapping";
-            case TENANTS:
-                return "tenant";
-            default:
-                return "";
-        }
+        return switch (endpoint()) {
+            case ACCOUNT -> "account";
+            case ACTIONGROUPS -> "actiongroup";
+            case ALLOWLIST, AUDIT, CONFIG -> "config";
+            case INTERNALUSERS -> "user";
+            case NODESDN -> "nodesdn";
+            case ROLES -> "role";
+            case ROLESMAPPING -> "rolesmapping";
+            case TENANTS -> "tenant";
+            default -> "";
+        };
     }
 
     default boolean isCurrentUserAdmin() {

@@ -47,7 +47,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
-public class ConfigUpgradeApiActionUnitTest extends AbstractApiActionValidationTest {
+public class ConfigUpgradeApiActionUnitTest extends AbstractConfigApiActionValidationTest {
 
     @Mock
     private Client client;

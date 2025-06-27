@@ -52,7 +52,7 @@ import static org.opensearch.security.dlic.rest.support.Utils.addRoutesPrefix;
  * Rest API action to fetch or update account details of the signed-in user.
  * Currently this action serves GET and PUT request for /_opendistro/_security/api/account endpoint
  */
-public class AccountApiAction extends AbstractApiAction {
+public class AccountApiAction extends AbstractConfigApiAction {
 
     private final PasswordHasher passwordHasher;
 

@@ -44,7 +44,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public abstract class AbstractApiActionValidationTest {
+public abstract class AbstractConfigApiActionValidationTest {
 
     @Mock
     ClusterService clusterService;
@@ -109,7 +109,7 @@ public abstract class AbstractApiActionValidationTest {
     @Test
     public void allCrudActionsForDefaultValidatorAreForbidden() throws Exception {
 
-        final var defaultPessimisticValidator = new AbstractApiAction(null, clusterService, threadPool, securityApiDependencies) {
+        final var defaultPessimisticValidator = new AbstractConfigApiAction(null, clusterService, threadPool, securityApiDependencies) {
             @Override
             protected CType<?> getConfigType() {
                 return CType.CONFIG;

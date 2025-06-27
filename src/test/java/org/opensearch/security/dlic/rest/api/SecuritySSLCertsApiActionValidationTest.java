@@ -25,7 +25,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
-public class SecuritySSLCertsApiActionValidationTest extends AbstractApiActionValidationTest {
+public class SecuritySSLCertsApiActionValidationTest extends AbstractConfigApiActionValidationTest {
 
     @Test
     public void withSecurityKeyStore() {

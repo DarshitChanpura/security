@@ -22,7 +22,7 @@ import org.opensearch.security.util.FakeRestRequest;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class RolesApiActionRequestContentValidatorTest extends AbstractApiActionValidationTest {
+public class RolesApiActionRequestContentValidatorTest extends AbstractConfigApiActionValidationTest {
 
     @Test
     public void doesNotValidateMaskedFields() throws IOException {

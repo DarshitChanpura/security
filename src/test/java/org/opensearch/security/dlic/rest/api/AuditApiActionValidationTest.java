@@ -28,7 +28,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
-public class AuditApiActionValidationTest extends AbstractApiActionValidationTest {
+public class AuditApiActionValidationTest extends AbstractConfigApiActionValidationTest {
 
     @Test
     public void disabledAuditApi() {

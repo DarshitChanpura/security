@@ -19,7 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 
-public class NodesDnApiActionValidationTest extends AbstractApiActionValidationTest {
+public class NodesDnApiActionValidationTest extends AbstractConfigApiActionValidationTest {
 
     @Test
     public void isNotAllowedToChangeImmutableEntity() throws Exception {

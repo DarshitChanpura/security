@@ -20,7 +20,7 @@ import org.mockito.Mockito;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-public class AccountApiActionConfigValidationsTest extends AbstractApiActionValidationTest {
+public class AccountApiActionConfigValidationsTest extends AbstractConfigApiActionValidationTest {
 
     @Test
     public void verifyValidCurrentPassword() {
