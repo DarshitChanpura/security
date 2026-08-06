@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
+import org.opensearch.action.search.SearchType;
 import org.opensearch.client.RestHighLevelClient;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
@@ -111,7 +112,14 @@ public class DlsPreFilterScoringIntegrationTest {
     }
 
     private SearchResponse searchAs(RestHighLevelClient client, String matchTerm) throws IOException {
+        return searchAs(client, matchTerm, null);
+    }
+
+    private SearchResponse searchAs(RestHighLevelClient client, String matchTerm, SearchType searchType) throws IOException {
         SearchRequest request = new SearchRequest(INDEX);
+        if (searchType != null) {
+            request.searchType(searchType);
+        }
         SearchSourceBuilder source = new SearchSourceBuilder().size(20);
         if (matchTerm != null) {
             source.query(QueryBuilders.matchQuery(CONTENT_FIELD, matchTerm));
@@ -157,6 +165,34 @@ public class DlsPreFilterScoringIntegrationTest {
             // (plain post-filter DLS) restrictedScore would be measurably below absentScore.
             assertThat(
                 "restricted-term score must equal absent-term score under pre-filter scoring",
+                (double) restrictedScore,
+                closeTo(absentScore, 0.0001)
+            );
+        }
+    }
+
+    /**
+     * dfs_query_then_fetch gathers term statistics in a separate DFS phase before the query phase.
+     * The pre-filter wrap is applied in the query phase (onPreQueryPhase -&gt; handleSearchContext), so
+     * this asserts the DFS phase also sees the wrapped query and does not reintroduce whole-shard
+     * statistics: under DFS, a term confined to non-visible docs must still score the same as an
+     * absent term. Guards the (otherwise only hand-verified) DFS coverage.
+     */
+    @Test
+    public void scoresAreVisibilityIndependent_underDfsQueryThenFetch() throws IOException {
+        try (RestHighLevelClient client = cluster.getRestHighLevelClient(CARDIO_USER)) {
+            SearchResponse restrictedResp = searchAs(client, RESTRICTED_TERM, SearchType.DFS_QUERY_THEN_FETCH);
+            SearchHit[] restrictedHits = restrictedResp.getHits().getHits();
+            assertThat((double) restrictedHits.length, greaterThan(0.0));
+            float restrictedScore = restrictedHits[0].getScore();
+
+            SearchResponse absentResp = searchAs(client, ABSENT_TERM, SearchType.DFS_QUERY_THEN_FETCH);
+            SearchHit[] absentHits = absentResp.getHits().getHits();
+            assertThat((double) absentHits.length, greaterThan(0.0));
+            float absentScore = absentHits[0].getScore();
+
+            assertThat(
+                "under dfs_query_then_fetch, restricted-term score must equal absent-term score",
                 (double) restrictedScore,
                 closeTo(absentScore, 0.0001)
             );
