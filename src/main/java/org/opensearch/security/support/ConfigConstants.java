@@ -356,6 +356,13 @@ public class ConfigConstants {
     public static final String SECURITY_DLS_MODE = SECURITY_SETTINGS_PREFIX + "dls.mode";
     public static final String SECURITY_DLS_WRITE_BLOCKED = SECURITY_SETTINGS_PREFIX + "dls.write_blocked";
     public static final boolean SECURITY_DLS_WRITE_BLOCKED_ENABLED_DEFAULT = false;
+    // When enabled, DLS applies the role's document filter as a pre-filter: the combined query is
+    // wrapped in constant_score so BM25 statistics reflect only the documents the role can read,
+    // instead of being computed over the whole shard and filtered afterwards. This keeps relevance
+    // scores independent of documents outside the DLS restriction, for the (common) case where
+    // relevance ranking is not required. Opt-in; default false preserves today's behavior.
+    public static final String SECURITY_DLS_PRE_FILTER_SCORING = SECURITY_SETTINGS_PREFIX + "dls.pre_filter_scoring";
+    public static final boolean SECURITY_DLS_PRE_FILTER_SCORING_DEFAULT = false;
     // REST API
     public static final String SECURITY_RESTAPI_ROLES_ENABLED = SECURITY_SETTINGS_PREFIX + "restapi.roles_enabled";
     public static final String SECURITY_RESTAPI_ADMIN_ENABLED = SECURITY_SETTINGS_PREFIX + "restapi.admin.enabled";
