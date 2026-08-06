@@ -66,6 +66,7 @@ import org.opensearch.security.privileges.dlsfls.IndexToRuleMap;
 import org.opensearch.security.queries.QueryBuilderTraverser;
 import org.opensearch.security.support.ConfigConstants;
 import org.opensearch.security.support.ReflectiveAttributeAccessors;
+import org.opensearch.security.support.SecuritySettings;
 import org.opensearch.security.util.ParentChildrenQueryDetector;
 import org.opensearch.transport.client.Client;
 
@@ -135,6 +136,7 @@ public class DlsFilterLevelActionHandler {
     private final ClusterService clusterService;
     private final IndicesService indicesService;
     private final ThreadContext threadContext;
+    private final boolean preFilterScoring;
     private BoolQueryBuilder filterLevelQueryBuilder;
     private DocumentAllowList documentAllowlist;
 
@@ -160,6 +162,14 @@ public class DlsFilterLevelActionHandler {
         this.requiresIndexScoping = resolved instanceof ResolvedIndices resolvedIndices
             ? resolvedIndices.local().names().size() != 1
             : true;
+
+        // Read the live (dynamically-updatable) value: the handler is constructed per request, and
+        // getClusterSettings().get(...) returns the current cluster-settings value, so a runtime
+        // transient/persistent update to the flag takes effect immediately.
+        this.preFilterScoring = clusterService.getClusterSettings() != null
+            ? clusterService.getClusterSettings().get(SecuritySettings.DLS_PRE_FILTER_SCORING)
+            : clusterService.getSettings()
+                .getAsBoolean(ConfigConstants.SECURITY_DLS_PRE_FILTER_SCORING, ConfigConstants.SECURITY_DLS_PRE_FILTER_SCORING_DEFAULT);
     }
 
     private boolean handle() {
@@ -236,7 +246,17 @@ public class DlsFilterLevelActionHandler {
             filterLevelQueryBuilder.must(query);
         }
 
-        searchRequest.source().query(filterLevelQueryBuilder);
+        if (preFilterScoring) {
+            // Pre-filter scoring: wrap the combined (DLS filter + user query) in a constant_score so
+            // no BM25 IDF is computed. Relevance statistics therefore reflect only the documents the
+            // role can read, rather than the whole shard: a term confined to documents outside the DLS
+            // restriction no longer affects the score of a document the role can see. The returned
+            // document set is unchanged; only relevance scoring is suppressed. Applies to the common
+            // case where the restricted view does not need relevance ranking.
+            searchRequest.source().query(QueryBuilders.constantScoreQuery(filterLevelQueryBuilder));
+        } else {
+            searchRequest.source().query(filterLevelQueryBuilder);
+        }
 
         nodeClient.search(searchRequest, new ActionListener<SearchResponse>() {
             @Override
