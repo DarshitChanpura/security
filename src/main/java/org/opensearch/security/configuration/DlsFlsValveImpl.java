@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.ConstantScoreQuery;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.util.BytesRef;
 
 import org.opensearch.OpenSearchException;
@@ -110,6 +111,7 @@ public class DlsFlsValveImpl implements DlsFlsRequestValve {
     private final OpensearchDynamicSetting<Boolean> resourceSharingEnabledSetting;
     private final ResourcePluginInfo resourcePluginInfo;
     private volatile boolean dlsWriteBlockedEnabled;
+    private volatile boolean dlsPreFilterScoring;
 
     public DlsFlsValveImpl(
         Settings settings,
@@ -142,9 +144,16 @@ public class DlsFlsValveImpl implements DlsFlsRequestValve {
             }
         });
         this.dlsWriteBlockedEnabled = settings.getAsBoolean(SECURITY_DLS_WRITE_BLOCKED, SECURITY_DLS_WRITE_BLOCKED_ENABLED_DEFAULT);
+        this.dlsPreFilterScoring = settings.getAsBoolean(
+            ConfigConstants.SECURITY_DLS_PRE_FILTER_SCORING,
+            ConfigConstants.SECURITY_DLS_PRE_FILTER_SCORING_DEFAULT
+        );
         if (clusterService.getClusterSettings() != null) {
             clusterService.getClusterSettings().addSettingsUpdateConsumer(SecuritySettings.DLS_WRITE_BLOCKED, newDlsWriteBlockedEnabled -> {
                 dlsWriteBlockedEnabled = newDlsWriteBlockedEnabled;
+            });
+            clusterService.getClusterSettings().addSettingsUpdateConsumer(SecuritySettings.DLS_PRE_FILTER_SCORING, newValue -> {
+                dlsPreFilterScoring = newValue;
             });
             clusterService.getClusterSettings()
                 .addSettingsUpdateConsumer(SecuritySettings.DFM_EMPTY_OVERRIDES_ALL_SETTING, newDfmEmptyOverridesAll -> {
@@ -516,7 +525,19 @@ public class DlsFlsValveImpl implements DlsFlsRequestValve {
 
                 queryBuilder.add(searchContext.parsedQuery().query(), Occur.MUST);
 
-                searchContext.parsedQuery(new ParsedQuery(queryBuilder.build()));
+                Query dlsScopedQuery = queryBuilder.build();
+                if (dlsPreFilterScoring) {
+                    // Pre-filter scoring: wrap the whole (DLS restriction + user query) in a constant_score so
+                    // the user query contributes no BM25 IDF. Without this, the user query is scored as an
+                    // Occur.MUST clause over whole-shard collection statistics, so a term confined to
+                    // documents outside the DLS restriction affects the score of a document the role can
+                    // read. Suppressing scoring here makes relevance statistics reflect only the visible
+                    // subset on the lucene-level search path. The returned document set is unchanged; only
+                    // relevance scoring is suppressed.
+                    dlsScopedQuery = new ConstantScoreQuery(dlsScopedQuery);
+                }
+
+                searchContext.parsedQuery(new ParsedQuery(dlsScopedQuery));
                 searchContext.preProcess(true);
             }
         } catch (Exception e) {
