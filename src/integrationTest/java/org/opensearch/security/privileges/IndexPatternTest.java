@@ -81,6 +81,25 @@ public class IndexPatternTest {
     }
 
     @Test
+    public void constantAlias_restrictToAlias_matchesAliasButNotBackingIndex() throws Exception {
+        // A "secured view" grant: the pattern matches the alias directly, but must NOT be inherited by the
+        // alias's backing concrete indices when those are requested directly. This is the static (per-request)
+        // leak site in IndexPattern.matches().
+        IndexPattern indexPattern = IndexPattern.from(java.util.List.of("alias_a"), true, /* restrictToAlias */ true);
+        assertTrue(indexPattern.hasStaticPattern());
+
+        // Access through the alias itself still works...
+        assertTrue(indexPattern.matches("alias_a", ctx(), INDEX_METADATA.getIndicesLookup()));
+        // ...but a direct request for any backing index is denied (no walk-up to the parent alias).
+        assertFalse(indexPattern.matches("index_a11", ctx(), INDEX_METADATA.getIndicesLookup()));
+        assertFalse(indexPattern.matches("index_a12", ctx(), INDEX_METADATA.getIndicesLookup()));
+
+        // Control: without restrict_to_alias the same grant DOES reach the backing index (historical behavior).
+        IndexPattern inherited = IndexPattern.from(java.util.List.of("alias_a"), true, /* restrictToAlias */ false);
+        assertTrue(inherited.matches("index_a11", ctx(), INDEX_METADATA.getIndicesLookup()));
+    }
+
+    @Test
     public void constantDataStream_onIndex() throws Exception {
         IndexPattern indexPattern = IndexPattern.from("data_stream_a1");
         assertTrue(indexPattern.hasStaticPattern());

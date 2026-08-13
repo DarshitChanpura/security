@@ -934,10 +934,16 @@ public class TestSecurityConfig {
         private String dlsQuery;
         private List<String> fls;
         private List<String> maskedFields;
+        private Boolean restrictToAlias;
 
         IndexPermission(Role role, String... allowedActions) {
             this.allowedActions = Arrays.asList(allowedActions);
             this.role = role;
+        }
+
+        public IndexPermission restrictToAlias(boolean restrictToAlias) {
+            this.restrictToAlias = restrictToAlias;
+            return this;
         }
 
         public IndexPermission dls(String dlsQuery) {
@@ -989,6 +995,10 @@ public class TestSecurityConfig {
 
             if (maskedFields != null) {
                 xContentBuilder.field("masked_fields", maskedFields);
+            }
+
+            if (restrictToAlias != null) {
+                xContentBuilder.field("restrict_to_alias", restrictToAlias);
             }
 
             xContentBuilder.endObject();
