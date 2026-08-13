@@ -48,6 +48,7 @@ public class IndexPattern {
         ImmutableSet.of(),
         ImmutableList.of(),
         ImmutableList.of(),
+        false,
         false
     );
 
@@ -96,6 +97,14 @@ public class IndexPattern {
      */
     private final boolean memberIndexPrivilegesYieldAliasPrivileges;
 
+    /**
+     * If this is true, this pattern grants a "secured view": it authorizes access only through an alias/data stream
+     * that matches it directly. It must NOT be satisfied by walking up from a directly-requested concrete backing
+     * index to its parent alias/data stream. Defaults to false, preserving the historical behavior where a grant on
+     * an alias is inherited by its member indices.
+     */
+    private final boolean restrictToAlias;
+
     private final int hashCode;
 
     private IndexPattern(
@@ -106,7 +115,8 @@ public class IndexPattern {
         ImmutableSet<String> staticPrefixPatterns,
         ImmutableList<String> patternTemplates,
         ImmutableList<String> dateMathExpressions,
-        boolean memberIndexPrivilegesYieldAliasPrivileges
+        boolean memberIndexPrivilegesYieldAliasPrivileges,
+        boolean restrictToAlias
     ) {
         this.source = source;
         this.staticPattern = staticPattern;
@@ -117,6 +127,7 @@ public class IndexPattern {
         this.staticPrefixPatterns = staticPrefixPatterns;
         this.hashCode = staticPattern.hashCode() + patternTemplates.hashCode() + dateMathExpressions.hashCode();
         this.memberIndexPrivilegesYieldAliasPrivileges = memberIndexPrivilegesYieldAliasPrivileges;
+        this.restrictToAlias = restrictToAlias;
     }
 
     public ImmutableList<String> source() {
@@ -140,6 +151,15 @@ public class IndexPattern {
         IndexAbstraction indexAbstraction = indexMetadata.get(indexOrAliasOrDatastream);
 
         if (indexAbstraction instanceof IndexAbstraction.Index) {
+            // The request targets a concrete index directly. Normally we also grant access if this pattern was
+            // granted on one of the index's parent aliases/data streams (privilege inheritance). A "secured view"
+            // pattern (restrictToAlias) deliberately opts out of that inheritance: it may only be satisfied by a
+            // direct match on the alias/data stream name (handled by matchesDirectly above), never by walking up
+            // from a directly-requested backing index. This is what keeps the backing index unreachable.
+            if (restrictToAlias) {
+                return false;
+            }
+
             // Check for the privilege for aliases or data streams containing this index
 
             if (indexAbstraction.getParentDataStream() != null) {
@@ -372,8 +392,8 @@ public class IndexPattern {
                 ImmutableSet.of(),
                 this.patternTemplates,
                 this.dateMathExpressions,
-                this.memberIndexPrivilegesYieldAliasPrivileges
-
+                this.memberIndexPrivilegesYieldAliasPrivileges,
+                this.restrictToAlias
             );
         }
     }
@@ -408,9 +428,25 @@ public class IndexPattern {
         private List<String> nonDynamicPrefixPatterns = new ArrayList<>();
         private List<String> nonDynamicPatternsWithoutExactAndPrefixPatterns = new ArrayList<>();
         private boolean memberIndexPrivilegesYieldAliasPrivileges;
+        // A merged pattern is a "secured view" only if EVERY contributing grant is restrict_to_alias. If any
+        // normal (non-restricted) grant contributes the same pattern, it legitimately reaches the backing index,
+        // so the merge must not restrict. We AND the per-grant flags in via add(...); until the first grant is
+        // seen this stays null so the first add() sets the initial value.
+        private Boolean restrictToAlias = null;
 
         public Builder(boolean memberIndexPrivilegesYieldAliasPrivileges) {
             this.memberIndexPrivilegesYieldAliasPrivileges = memberIndexPrivilegesYieldAliasPrivileges;
+        }
+
+        public Builder restrictToAlias(boolean restrictToAlias) {
+            this.restrictToAlias = restrictToAlias;
+            return this;
+        }
+
+        public void add(List<String> source, boolean restrictToAlias) {
+            // AND-combine: the merged pattern restricts to the alias only if all contributing grants do.
+            this.restrictToAlias = (this.restrictToAlias == null) ? restrictToAlias : (this.restrictToAlias && restrictToAlias);
+            add(source);
         }
 
         public void add(List<String> source) {
@@ -452,13 +488,19 @@ public class IndexPattern {
                 ImmutableSet.copyOf(nonDynamicPrefixPatterns),
                 ImmutableList.copyOf(patternTemplates),
                 ImmutableList.copyOf(dateMathExpressions),
-                this.memberIndexPrivilegesYieldAliasPrivileges
+                this.memberIndexPrivilegesYieldAliasPrivileges,
+                this.restrictToAlias != null && this.restrictToAlias
             );
         }
     }
 
     public static IndexPattern from(List<String> source, boolean memberIndexPrivilegesYieldAliasPrivileges) {
+        return from(source, memberIndexPrivilegesYieldAliasPrivileges, false);
+    }
+
+    public static IndexPattern from(List<String> source, boolean memberIndexPrivilegesYieldAliasPrivileges, boolean restrictToAlias) {
         Builder builder = new Builder(memberIndexPrivilegesYieldAliasPrivileges);
+        builder.restrictToAlias(restrictToAlias);
         builder.add(source);
         return builder.build();
     }

@@ -64,6 +64,22 @@ public class SecuritySettings {
         Setting.Property.Sensitive
     );
 
+    public static final Setting<Boolean> DLS_PRE_FILTER_SCORING = Setting.boolSetting(
+        ConfigConstants.SECURITY_DLS_PRE_FILTER_SCORING,
+        ConfigConstants.SECURITY_DLS_PRE_FILTER_SCORING_DEFAULT,
+        Setting.Property.NodeScope,
+        Setting.Property.Dynamic
+    );
+
+    // Registers the existing plugins.security.dls.mode setting (adaptive | lucene_level | filter_level)
+    // so it is accepted by strict settings validation. Previously read via settings.get() without a
+    // registered Setting.
+    public static final Setting<String> DLS_MODE = Setting.simpleString(
+        ConfigConstants.SECURITY_DLS_MODE,
+        "adaptive",
+        Setting.Property.NodeScope
+    );
+
     public static final Setting<Boolean> AUDIT_ENABLED_SETTING = Setting.boolSetting(
         ConfigConstants.SECURITY_AUDIT_ENABLED,
         true,

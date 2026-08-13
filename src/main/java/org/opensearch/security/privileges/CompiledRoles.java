@@ -212,7 +212,11 @@ public class CompiledRoles {
                 boolean memberIndexPrivilegesYieldAliasPrivileges
             ) {
                 this.rawIndex = rawIndex;
-                this.indexPattern = IndexPattern.from(rawIndex.getIndex_patterns(), memberIndexPrivilegesYieldAliasPrivileges);
+                this.indexPattern = IndexPattern.from(
+                    rawIndex.getIndex_patterns(),
+                    memberIndexPrivilegesYieldAliasPrivileges,
+                    rawIndex.isRestrict_to_alias()
+                );
 
                 this.resolvedActions = actionGroups.resolve(rawIndex.getAllowed_actions());
                 this.allowedActionsMatcher = WildcardMatcher.from(this.resolvedActions);

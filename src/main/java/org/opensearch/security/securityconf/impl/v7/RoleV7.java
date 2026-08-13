@@ -125,6 +125,13 @@ public class RoleV7 implements Hideable, StaticDefinable {
         private List<String> fls = Collections.emptyList();
         private List<String> masked_fields = Collections.emptyList();
         private List<String> allowed_actions = Collections.emptyList();
+        // When true, a grant on an alias pattern authorizes access only through the alias itself (a "secured
+        // view"); it does NOT confer access to the alias's backing concrete indices when those are requested
+        // directly. Defaults to false, preserving the historical behavior where an alias grant is inherited by
+        // its member indices. Bound explicitly via @JsonProperty so the snake_case name resolves regardless of
+        // the mapper's property-naming strategy (a plain boolean is-getter would otherwise derive a camelCase name).
+        @JsonProperty("restrict_to_alias")
+        private boolean restrict_to_alias = false;
 
         public Index() {
             super();
@@ -170,6 +177,14 @@ public class RoleV7 implements Hideable, StaticDefinable {
             this.allowed_actions = allowed_actions;
         }
 
+        public boolean isRestrict_to_alias() {
+            return restrict_to_alias;
+        }
+
+        public void setRestrict_to_alias(boolean restrict_to_alias) {
+            this.restrict_to_alias = restrict_to_alias;
+        }
+
         @Override
         public String toString() {
             return "Index [index_patterns="
@@ -182,6 +197,8 @@ public class RoleV7 implements Hideable, StaticDefinable {
                 + masked_fields
                 + ", allowed_actions="
                 + allowed_actions
+                + ", restrict_to_alias="
+                + restrict_to_alias
                 + "]";
         }
 
@@ -194,12 +211,13 @@ public class RoleV7 implements Hideable, StaticDefinable {
                 && Objects.equals(dls, index.dls)
                 && Objects.equals(fls, index.fls)
                 && Objects.equals(masked_fields, index.masked_fields)
-                && Objects.equals(allowed_actions, index.allowed_actions);
+                && Objects.equals(allowed_actions, index.allowed_actions)
+                && restrict_to_alias == index.restrict_to_alias;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(index_patterns, dls, fls, masked_fields, allowed_actions);
+            return Objects.hash(index_patterns, dls, fls, masked_fields, allowed_actions, restrict_to_alias);
         }
     }
 

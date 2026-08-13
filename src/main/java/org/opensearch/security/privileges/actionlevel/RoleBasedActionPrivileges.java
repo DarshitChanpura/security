@@ -403,12 +403,12 @@ public class RoleBasedActionPrivileges extends RuntimeOptimizedActionPrivileges 
                             if (WildcardMatcher.isExact(permission)) {
                                 rolesToActionToIndexPattern.computeIfAbsent(roleName, k -> new HashMap<>())
                                     .computeIfAbsent(permission, indexPatternBuilder)
-                                    .add(indexPermissions.indexPattern.source());
+                                    .add(indexPermissions.indexPattern.source(), indexPermissions.rawIndex.isRestrict_to_alias());
 
                                 if (WellKnownActions.EXPLICITLY_REQUIRED_INDEX_ACTIONS.contains(permission)) {
                                     rolesToExplicitActionToIndexPattern.computeIfAbsent(roleName, k -> new HashMap<>())
                                         .computeIfAbsent(permission, indexPatternBuilder)
-                                        .add(indexPermissions.indexPattern.source());
+                                        .add(indexPermissions.indexPattern.source(), indexPermissions.rawIndex.isRestrict_to_alias());
                                 }
 
                                 if (indexPermissions.indexPattern.isMatchAll()) {
@@ -423,7 +423,7 @@ public class RoleBasedActionPrivileges extends RuntimeOptimizedActionPrivileges 
                                 for (String action : actionMatcher.iterateMatching(WellKnownActions.INDEX_ACTIONS)) {
                                     rolesToActionToIndexPattern.computeIfAbsent(roleName, k -> new HashMap<>())
                                         .computeIfAbsent(action, indexPatternBuilder)
-                                        .add(indexPermissions.indexPattern.source());
+                                        .add(indexPermissions.indexPattern.source(), indexPermissions.rawIndex.isRestrict_to_alias());
 
                                     if (indexPermissions.indexPattern.isMatchAll()) {
                                         actionToRolesWithWildcardIndexPrivileges.computeIfAbsent(
@@ -435,7 +435,7 @@ public class RoleBasedActionPrivileges extends RuntimeOptimizedActionPrivileges 
 
                                 rolesToActionPatternToIndexPattern.computeIfAbsent(roleName, k -> new HashMap<>())
                                     .computeIfAbsent(actionMatcher, indexPatternBuilder)
-                                    .add(indexPermissions.indexPattern.source());
+                                    .add(indexPermissions.indexPattern.source(), indexPermissions.rawIndex.isRestrict_to_alias());
 
                                 if (actionMatcher != WildcardMatcher.ANY) {
                                     for (String action : actionMatcher.iterateMatching(
@@ -443,7 +443,7 @@ public class RoleBasedActionPrivileges extends RuntimeOptimizedActionPrivileges 
                                     )) {
                                         rolesToExplicitActionToIndexPattern.computeIfAbsent(roleName, k -> new HashMap<>())
                                             .computeIfAbsent(action, indexPatternBuilder)
-                                            .add(indexPermissions.indexPattern.source());
+                                            .add(indexPermissions.indexPattern.source(), indexPermissions.rawIndex.isRestrict_to_alias());
                                     }
                                 }
                             }
@@ -811,7 +811,10 @@ public class RoleBasedActionPrivileges extends RuntimeOptimizedActionPrivileges 
 
                                 indexToRoles.get(index.getName()).add(roleName);
 
-                                if (index instanceof IndexAbstraction.Alias) {
+                                // A "secured view" grant (restrict_to_alias) authorizes access only through the
+                                // alias name itself; it must NOT be inherited by the alias's backing indices. So
+                                // we seed only the alias name above and skip the sub-index seeding below.
+                                if (index instanceof IndexAbstraction.Alias && !indexPermissions.rawIndex.isRestrict_to_alias()) {
                                     // For aliases we additionally add the sub-indices to the privilege map
                                     for (IndexMetadata subIndex : index.getIndices()) {
                                         String subIndexName = subIndex.getIndex().getName();
