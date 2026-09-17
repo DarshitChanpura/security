@@ -481,6 +481,24 @@ public class BackendRegistry {
                 authenticatedUser = authenticatedUser.withRequestedTenant(tenant);
             }
 
+            /*
+            Extract the current workspace from the request, mirroring the tenant handling above. Dashboards forwards the
+            workspace the UI is in (parsed server-side from the /w/<id> URL). Re-emitted under the guarded internal key
+            so it propagates on the thread context to the DLS valve, which narrows resource visibility to it.
+            Safe even if a client supplies it directly: DLS intersects it with the user's trusted workspace membership,
+            so it can only narrow, never grant.
+             */
+            final String currentWorkspace = request.header(ConfigConstants.OPENSEARCH_CURRENT_WORKSPACE_HEADER);
+            if (currentWorkspace != null && !currentWorkspace.isBlank()) {
+                // Persistent, not putHeader: the DLS valve reads this during searches the plugin runs under a stashed
+                // system-subject context, where only persistent entries survive - the same mechanism that carries the
+                // authenticated User.
+                final ThreadContext threadContext = threadPool.getThreadContext();
+                if (threadContext.getPersistent(ConfigConstants.OPENDISTRO_SECURITY_CURRENT_WORKSPACE) == null) {
+                    threadContext.putPersistent(ConfigConstants.OPENDISTRO_SECURITY_CURRENT_WORKSPACE, currentWorkspace);
+                }
+            }
+
             authenticated = true;
             break;
         }// end looping auth domains
