@@ -493,7 +493,6 @@ public class BackendRegistry {
                 // Persistent, not putHeader: the DLS valve reads this during searches the plugin runs under a stashed
                 // system-subject context, where only persistent entries survive - the same mechanism that carries the
                 // authenticated User.
-                final ThreadContext threadContext = threadPool.getThreadContext();
                 if (threadContext.getPersistent(ConfigConstants.OPENDISTRO_SECURITY_CURRENT_WORKSPACE) == null) {
                     threadContext.putPersistent(ConfigConstants.OPENDISTRO_SECURITY_CURRENT_WORKSPACE, currentWorkspace);
                 }
