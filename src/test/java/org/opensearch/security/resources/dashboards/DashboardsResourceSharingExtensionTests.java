@@ -95,6 +95,30 @@ public class DashboardsResourceSharingExtensionTests {
     }
 
     @Test
+    public void registersAccessLevelsProgrammatically() {
+        ResourcePluginInfo info = registered();
+        DashboardsResourceSharingExtension.registerAccessLevels(info);
+        info.updateProtectedTypes(List.of(DashboardsResourceSharingExtension.WORKSPACE_TYPE, "dashboard", "index-pattern"));
+
+        // Three levels per type, and the read-only level is the registered default.
+        Set<String> workspaceLevels = info.getResourceTypes()
+            .stream()
+            .filter(t -> DashboardsResourceSharingExtension.WORKSPACE_TYPE.equals(t.resourceType()))
+            .flatMap(t -> t.accessLevels().stream())
+            .collect(Collectors.toSet());
+        assertEquals(Set.of("workspace_read_only", "workspace_read_write", "workspace_full_access"), workspaceLevels);
+        assertEquals("workspace_read_only", info.getDefaultAccessLevel(DashboardsResourceSharingExtension.WORKSPACE_TYPE));
+
+        // A hyphenated type yields underscored level names.
+        assertEquals("index_pattern_read_only", info.getDefaultAccessLevel("index-pattern"));
+
+        // Levels resolve to concrete actions, so the write-path check has something to match against.
+        assertTrue(
+            info.flattenedForType("dashboard").resolve(Set.of("dashboard_read_only")).contains("indices:data/read/get")
+        );
+    }
+
+    @Test
     public void mixedWorkspacesFieldDeclarationsDoNotConflict() {
         // The workspace type declares null and the member types declare "workspaces"; registration must accept that
         // (only conflicting non-null declarations on one index are rejected).
