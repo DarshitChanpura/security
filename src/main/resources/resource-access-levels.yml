@@ -1,0 +1,103 @@
+# Access levels for the built-in Dashboards saved-object resource types (see
+# DashboardsResourceSharingExtension). Loaded by ResourceAccessLevelHelper from this plugin's classloader.
+#
+# allowed_actions are matched as plain action strings against the action being authorized, so these list the
+# document-level actions a Dashboards saved-object request actually carries.
+resource_types:
+  workspace:
+    workspace_read_only:
+      default: true
+      # Workspace read grants read on the workspace's member saved objects.
+      allowed_actions:
+        - "indices:data/read/get"
+        - "indices:data/read/mget*"
+        - "indices:data/read/search*"
+    workspace_read_write:
+      allowed_actions:
+        - "indices:data/read/get"
+        - "indices:data/read/mget*"
+        - "indices:data/read/search*"
+        - "indices:data/write/index*"
+        - "indices:data/write/update*"
+        - "indices:data/write/bulk*"
+    workspace_full_access:
+      allowed_actions:
+        - "indices:data/read/*"
+        - "indices:data/write/*"
+        - "cluster:admin/security/resource/share"
+
+  dashboard:
+    dashboard_read_only:
+      default: true
+      allowed_actions:
+        - "indices:data/read/get"
+        - "indices:data/read/mget*"
+        - "indices:data/read/search*"
+    dashboard_read_write:
+      allowed_actions:
+        - "indices:data/read/*"
+        - "indices:data/write/index*"
+        - "indices:data/write/update*"
+        - "indices:data/write/bulk*"
+    dashboard_full_access:
+      allowed_actions:
+        - "indices:data/read/*"
+        - "indices:data/write/*"
+        - "cluster:admin/security/resource/share"
+
+  visualization:
+    visualization_read_only:
+      default: true
+      allowed_actions:
+        - "indices:data/read/get"
+        - "indices:data/read/mget*"
+        - "indices:data/read/search*"
+    visualization_read_write:
+      allowed_actions:
+        - "indices:data/read/*"
+        - "indices:data/write/index*"
+        - "indices:data/write/update*"
+        - "indices:data/write/bulk*"
+    visualization_full_access:
+      allowed_actions:
+        - "indices:data/read/*"
+        - "indices:data/write/*"
+        - "cluster:admin/security/resource/share"
+
+  search:
+    search_read_only:
+      default: true
+      allowed_actions:
+        - "indices:data/read/get"
+        - "indices:data/read/mget*"
+        - "indices:data/read/search*"
+    search_read_write:
+      allowed_actions:
+        - "indices:data/read/*"
+        - "indices:data/write/index*"
+        - "indices:data/write/update*"
+        - "indices:data/write/bulk*"
+    search_full_access:
+      allowed_actions:
+        - "indices:data/read/*"
+        - "indices:data/write/*"
+        - "cluster:admin/security/resource/share"
+
+  index-pattern:
+    index_pattern_read_only:
+      default: true
+      allowed_actions:
+        - "indices:data/read/get"
+        - "indices:data/read/mget*"
+        - "indices:data/read/search*"
+    index_pattern_read_write:
+      allowed_actions:
+        - "indices:data/read/*"
+        - "indices:data/write/index*"
+        - "indices:data/write/update*"
+        - "indices:data/write/bulk*"
+    index_pattern_full_access:
+      allowed_actions:
+        - "indices:data/read/*"
+        - "indices:data/write/*"
+        - "cluster:admin/security/resource/share"

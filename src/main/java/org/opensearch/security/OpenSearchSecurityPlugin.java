@@ -204,6 +204,7 @@ import org.opensearch.security.resources.ResourceAccessLevelHelper;
 import org.opensearch.security.resources.ResourceIndexListener;
 import org.opensearch.security.resources.ResourcePluginInfo;
 import org.opensearch.security.resources.ResourceSharingIndexHandler;
+import org.opensearch.security.resources.dashboards.DashboardsResourceSharingExtension;
 import org.opensearch.security.resources.api.list.AccessibleResourcesRestAction;
 import org.opensearch.security.resources.api.list.ResourceTypesRestAction;
 import org.opensearch.security.resources.api.share.ShareAction;
@@ -2715,6 +2716,24 @@ public final class OpenSearchSecurityPlugin extends OpenSearchSecuritySSLPlugin
             settings.add(ResourceSharingFeatureFlagSetting.LEGACY_RESOURCE_SHARING_ENABLED);
             settings.add(ResourceSharingProtectedResourcesSetting.LEGACY_PROTECTED_TYPES);
 
+            // Built-in Dashboards saved-object resource types (see DashboardsResourceSharingExtension)
+            settings.add(
+                Setting.boolSetting(
+                    ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_ONBOARDING_ENABLED,
+                    ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_ONBOARDING_ENABLED_DEFAULT,
+                    Property.NodeScope,
+                    Property.Filtered
+                )
+            );
+            settings.add(
+                Setting.simpleString(
+                    ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX,
+                    ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX_DEFAULT,
+                    Property.NodeScope,
+                    Property.Filtered
+                )
+            );
+
             settings.add(UserFactory.Caching.MAX_SIZE);
             settings.add(UserFactory.Caching.EXPIRE_AFTER_ACCESS);
 
@@ -2971,6 +2990,21 @@ public final class OpenSearchSecurityPlugin extends OpenSearchSecuritySSLPlugin
     public void loadExtensions(ExtensionLoader loader) {
         // discover & register resource-sharing extensions and their types
         Set<ResourceSharingExtension> exts = new HashSet<>(loader.loadExtensions(ResourceSharingExtension.class));
+
+        // Dashboards is not an OpenSearch plugin, so it cannot supply a ResourceSharingExtension for its saved
+        // objects. Register a built-in one on its behalf when onboarding is enabled.
+        if (settings.getAsBoolean(
+            ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_ONBOARDING_ENABLED,
+            ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_ONBOARDING_ENABLED_DEFAULT
+        )) {
+            String dashboardsIndex = settings.get(
+                ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX,
+                ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX_DEFAULT
+            );
+            exts.add(new DashboardsResourceSharingExtension(dashboardsIndex));
+            log.info("Registered built-in Dashboards saved-object resource types on index {}", dashboardsIndex);
+        }
+
         resourcePluginInfo.setResourceSharingExtensions(exts);
 
         // load action-groups in memory

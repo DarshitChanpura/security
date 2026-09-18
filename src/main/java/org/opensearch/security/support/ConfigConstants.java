@@ -470,6 +470,19 @@ public class ConfigConstants {
     public static final String OPENSEARCH_RESOURCE_SHARING_PROTECTED_TYPES = "plugins.security.resource_sharing.protected_types";
 
     /**
+     * Registers the built-in Dashboards saved-object resource types (see DashboardsResourceSharingExtension), which
+     * brings them under resource sharing without a separate OpenSearch-side plugin. Off by default; a registered type
+     * still only takes effect once it is also listed in {@link #OPENSEARCH_RESOURCE_SHARING_PROTECTED_TYPES}.
+     */
+    public static final String OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_ONBOARDING_ENABLED =
+        "plugins.security.resource_sharing.dashboards_onboarding.enabled";
+    public static final boolean OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_ONBOARDING_ENABLED_DEFAULT = false;
+
+    /** Index holding Dashboards saved objects; matches {@code dynamic.kibana.index} in the security config. */
+    public static final String OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX = "plugins.security.resource_sharing.dashboards_index";
+    public static final String OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX_DEFAULT = ".kibana";
+
+    /**
      * Pre-graduation name of {@link #OPENSEARCH_RESOURCE_SHARING_PROTECTED_TYPES}. See
      * {@link #OPENSEARCH_LEGACY_RESOURCE_SHARING_ENABLED}.
      */
