@@ -2993,6 +2993,7 @@ public final class OpenSearchSecurityPlugin extends OpenSearchSecuritySSLPlugin
 
         // Dashboards is not an OpenSearch plugin, so it cannot supply a ResourceSharingExtension for its saved
         // objects. Register a built-in one on its behalf when onboarding is enabled.
+        boolean dashboardsOnboarded = false;
         if (settings.getAsBoolean(
             ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_ONBOARDING_ENABLED,
             ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_ONBOARDING_ENABLED_DEFAULT
@@ -3002,6 +3003,7 @@ public final class OpenSearchSecurityPlugin extends OpenSearchSecuritySSLPlugin
                 ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX_DEFAULT
             );
             exts.add(new DashboardsResourceSharingExtension(dashboardsIndex));
+            dashboardsOnboarded = true;
             log.info("Registered built-in Dashboards saved-object resource types on index {}", dashboardsIndex);
         }
 
@@ -3009,6 +3011,12 @@ public final class OpenSearchSecurityPlugin extends OpenSearchSecuritySSLPlugin
 
         // load action-groups in memory
         ResourceAccessLevelHelper.loadAccessLevelConfig(resourcePluginInfo);
+
+        // The built-in types register their access levels directly rather than through a resource-access-levels.yml,
+        // whose fixed filename would be ambiguous with a plugin's own copy on a shared classpath.
+        if (dashboardsOnboarded) {
+            DashboardsResourceSharingExtension.registerAccessLevels(resourcePluginInfo);
+        }
 
         // ResourceSharingExtension extends SecurityConfigExtension, so all resource-sharing
         // plugins are also config extensions. Collect them along with any standalone
