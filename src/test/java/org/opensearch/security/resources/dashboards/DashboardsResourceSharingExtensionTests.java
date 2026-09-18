@@ -113,9 +113,7 @@ public class DashboardsResourceSharingExtensionTests {
         assertEquals("index_pattern_read_only", info.getDefaultAccessLevel("index-pattern"));
 
         // Levels resolve to concrete actions, so the write-path check has something to match against.
-        assertTrue(
-            info.flattenedForType("dashboard").resolve(Set.of("dashboard_read_only")).contains("indices:data/read/get")
-        );
+        assertTrue(info.flattenedForType("dashboard").resolve(Set.of("dashboard_read_only")).contains("indices:data/read/get"));
     }
 
     @Test
