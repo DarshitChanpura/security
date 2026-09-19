@@ -2993,12 +2993,15 @@ public final class OpenSearchSecurityPlugin extends OpenSearchSecuritySSLPlugin
 
         // Dashboards is not an OpenSearch plugin, so it cannot supply a ResourceSharingExtension for its saved
         // objects. Register a built-in one on its behalf when onboarding is enabled.
+        // pluginSettings, not the inherited settings field: the latter is null when the plugin is disabled, and
+        // loadExtensions still runs in that case.
         boolean dashboardsOnboarded = false;
-        if (settings.getAsBoolean(
-            ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_ONBOARDING_ENABLED,
-            ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_ONBOARDING_ENABLED_DEFAULT
-        )) {
-            String dashboardsIndex = settings.get(
+        if (pluginSettings != null
+            && pluginSettings.getAsBoolean(
+                ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_ONBOARDING_ENABLED,
+                ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_ONBOARDING_ENABLED_DEFAULT
+            )) {
+            String dashboardsIndex = pluginSettings.get(
                 ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX,
                 ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX_DEFAULT
             );
