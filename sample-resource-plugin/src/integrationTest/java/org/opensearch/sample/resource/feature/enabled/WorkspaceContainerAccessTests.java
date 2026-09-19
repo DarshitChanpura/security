@@ -16,6 +16,7 @@ import java.util.List;
 
 import com.carrotsearch.randomizedtesting.RandomizedRunner;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.apache.http.HttpStatus;
 import org.awaitility.Awaitility;
 import org.junit.After;
@@ -34,10 +35,12 @@ import tools.jackson.databind.JsonNode;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.opensearch.sample.resource.TestUtils.ApiHelper.assertSearchResponse;
 import static org.opensearch.sample.resource.TestUtils.FULL_ACCESS_USER;
 import static org.opensearch.sample.resource.TestUtils.RESOURCE_SHARING_INDEX;
 import static org.opensearch.sample.resource.TestUtils.SAMPLE_READ_ONLY;
 import static org.opensearch.sample.resource.TestUtils.SAMPLE_RESOURCE_CREATE_ENDPOINT;
+import static org.opensearch.sample.resource.TestUtils.SAMPLE_RESOURCE_SEARCH_ENDPOINT;
 import static org.opensearch.sample.resource.TestUtils.SAMPLE_RESOURCE_UPDATE_ENDPOINT;
 import static org.opensearch.sample.resource.TestUtils.newCluster;
 import static org.opensearch.sample.utils.Constants.RESOURCE_INDEX_NAME;
@@ -247,6 +250,34 @@ public class WorkspaceContainerAccessTests {
     }
 
     // Sets the resource doc's `workspaces` field to exactly the given ids (empty clears it), as the super admin.
+    @Test
+    public void testCurrentWorkspaceHeaderNarrowsReadVisibility() throws Exception {
+        // Read path: the `currentworkspace` header narrows DLS visibility to a single workspace. FULL_ACCESS_USER's one
+        // security role resolves to exactly this workspace.
+        final String userWorkspace = "ws-user_" + FULL_ACCESS_USER.getName() + "__shared_role";
+
+        // Admin-owned resource placed in the user's workspace -> visible to them via membership, not via sharing.
+        String resId = api.createSampleResourceAs(USER_ADMIN);
+        api.awaitSharingEntry(resId);
+        setResourceWorkspaces(resId, userWorkspace);
+
+        // No header -> the user's full membership applies -> visible.
+        assertSearchResponse(ok(() -> api.searchResources(FULL_ACCESS_USER)), 1, "sample");
+
+        // Header naming the user's own workspace -> narrowed set still contains it -> visible.
+        assertSearchResponse(ok(() -> searchWithWorkspace(FULL_ACCESS_USER, userWorkspace)), 1, "sample");
+
+        // Header naming a workspace the user is NOT a member of -> narrowed to empty -> hidden. This proves the header
+        // reached DLS, and that a foreign workspace can only exclude, never grant.
+        assertSearchResponse(ok(() -> searchWithWorkspace(FULL_ACCESS_USER, "ws-not-a-member")), 0, null);
+    }
+
+    private HttpResponse searchWithWorkspace(TestSecurityConfig.User user, String workspaceId) {
+        try (TestRestClient client = cluster.getRestClient(user)) {
+            return client.get(SAMPLE_RESOURCE_SEARCH_ENDPOINT, new BasicHeader("currentworkspace", workspaceId));
+        }
+    }
+
     private void setResourceWorkspaces(String resourceId, String... workspaceIds) {
         StringBuilder arr = new StringBuilder("[");
         for (int i = 0; i < workspaceIds.length; i++) {

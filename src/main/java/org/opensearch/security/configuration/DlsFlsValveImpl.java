@@ -190,7 +190,8 @@ public class DlsFlsValveImpl implements DlsFlsRequestValve {
                         namedXContentRegistry,
                         resolvedIndexNames,
                         user,
-                        resourcePluginInfo
+                        resourcePluginInfo,
+                        threadContext
                     );
 
                     return DlsFilterLevelActionHandler.handle(
