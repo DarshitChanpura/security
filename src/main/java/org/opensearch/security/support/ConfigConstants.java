@@ -85,6 +85,12 @@ public class ConfigConstants {
     public static final String OPENDISTRO_SECURITY_CONF_REQUEST_HEADER = OPENDISTRO_SECURITY_CONFIG_PREFIX + "conf_request";
     public static final String OPENSEARCH_SECURITY_REQUEST_HEADERS = OPENSEARCH_SECURITY_CONFIG_PREFIX + "request_headers";
 
+    // Request-scoped current workspace. Dashboards forwards the active workspace (parsed from the /w/<id> URL) as this
+    // client-facing header; the security plugin re-emits it server-side under the guarded internal key so DLS can
+    // narrow resource visibility to that one workspace, intersected with the user's membership.
+    public static final String OPENSEARCH_CURRENT_WORKSPACE_HEADER = "currentworkspace";
+    public static final String OPENDISTRO_SECURITY_CURRENT_WORKSPACE = OPENDISTRO_SECURITY_CONFIG_PREFIX + "current_workspace";
+
     public static final String SECURITY_AUDIT_REST_HEADERS = OPENSEARCH_SECURITY_CONFIG_PREFIX + "audit_rest_headers";
 
     public static final String OPENDISTRO_SECURITY_REMOTE_ADDRESS = OPENDISTRO_SECURITY_CONFIG_PREFIX + "remote_address";
