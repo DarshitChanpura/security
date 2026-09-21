@@ -36,6 +36,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 import org.opensearch.common.settings.Settings;
+import org.opensearch.common.unit.TimeValue;
 import org.opensearch.security.auditlog.impl.AuditCategory;
 
 import com.password4j.types.Hmac;
@@ -487,6 +488,16 @@ public class ConfigConstants {
     /** Index holding Dashboards saved objects; matches {@code dynamic.kibana.index} in the security config. */
     public static final String OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX = "plugins.security.resource_sharing.dashboards_index";
     public static final String OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX_DEFAULT = ".kibana";
+
+    /**
+     * How often workspace membership is re-read from the workspace sharing records. Resolution is I/O-free on the
+     * privilege hot path, so this interval bounds how long a membership change takes to take effect.
+     */
+    public static final String OPENSEARCH_RESOURCE_SHARING_WORKSPACE_MEMBERSHIP_REFRESH_INTERVAL =
+        "plugins.security.resource_sharing.workspace_membership_refresh_interval";
+    public static final TimeValue OPENSEARCH_RESOURCE_SHARING_WORKSPACE_MEMBERSHIP_REFRESH_INTERVAL_DEFAULT = TimeValue.timeValueSeconds(
+        30
+    );
 
     /**
      * Pre-graduation name of {@link #OPENSEARCH_RESOURCE_SHARING_PROTECTED_TYPES}. See

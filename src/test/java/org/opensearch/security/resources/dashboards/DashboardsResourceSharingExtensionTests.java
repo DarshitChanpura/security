@@ -30,13 +30,13 @@ public class DashboardsResourceSharingExtensionTests {
 
     private ResourcePluginInfo registered() {
         ResourcePluginInfo info = new ResourcePluginInfo();
-        info.setResourceSharingExtensions(Set.of(new DashboardsResourceSharingExtension(INDEX)));
+        info.setResourceSharingExtensions(Set.of(new DashboardsResourceSharingExtension(INDEX, new WorkspaceMembershipCache(INDEX))));
         return info;
     }
 
     @Test
     public void declaresWorkspaceAndShareableTypesOnTheDashboardsIndex() {
-        DashboardsResourceSharingExtension ext = new DashboardsResourceSharingExtension(INDEX);
+        DashboardsResourceSharingExtension ext = new DashboardsResourceSharingExtension(INDEX, new WorkspaceMembershipCache(INDEX));
         Set<String> types = ext.getResourceProviders().stream().map(ResourceProvider::resourceType).collect(Collectors.toSet());
 
         // The workspace type must be present: the write-path container fan-out resolves a workspace's own record by it.
@@ -51,7 +51,7 @@ public class DashboardsResourceSharingExtensionTests {
 
     @Test
     public void workspaceTypeDeclaresNoWorkspacesFieldButMembersDo() {
-        DashboardsResourceSharingExtension ext = new DashboardsResourceSharingExtension(INDEX);
+        DashboardsResourceSharingExtension ext = new DashboardsResourceSharingExtension(INDEX, new WorkspaceMembershipCache(INDEX));
         for (ResourceProvider p : ext.getResourceProviders()) {
             if (DashboardsResourceSharingExtension.WORKSPACE_TYPE.equals(p.resourceType())) {
                 // A workspace is a container, not a member of one.

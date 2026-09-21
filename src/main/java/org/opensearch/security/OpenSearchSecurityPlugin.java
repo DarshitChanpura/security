@@ -210,6 +210,7 @@ import org.opensearch.security.resources.api.share.ShareAction;
 import org.opensearch.security.resources.api.share.ShareRestAction;
 import org.opensearch.security.resources.api.share.ShareTransportAction;
 import org.opensearch.security.resources.dashboards.DashboardsResourceSharingExtension;
+import org.opensearch.security.resources.dashboards.WorkspaceMembershipCache;
 import org.opensearch.security.resources.settings.ResourceSharingFeatureFlagSetting;
 import org.opensearch.security.resources.settings.ResourceSharingProtectedResourcesSetting;
 import org.opensearch.security.resources.sharing.ResourceSharing;
@@ -319,6 +320,7 @@ public final class OpenSearchSecurityPlugin extends OpenSearchSecuritySSLPlugin
     private volatile Client localClient;
     private final boolean disabled;
     private final Settings pluginSettings;
+    private WorkspaceMembershipCache workspaceMembershipCache;
     private volatile SecurityTokenManager tokenManager;
     private volatile DynamicConfigFactory dcf;
     private final List<String> demoCertHashes = new ArrayList<String>(3);
@@ -1604,6 +1606,19 @@ public final class OpenSearchSecurityPlugin extends OpenSearchSecuritySSLPlugin
 
         rsIndexHandler = new ResourceSharingIndexHandler(localClient, threadPool, resourcePluginInfo);
 
+        // Workspace membership is derived from the workspace sharing records, so it can only start once the sharing
+        // index handler exists. Reads happen on this schedule, keeping the privilege hot path free of I/O.
+        if (workspaceMembershipCache != null) {
+            workspaceMembershipCache.start(
+                rsIndexHandler,
+                threadPool,
+                pluginSettings.getAsTime(
+                    ConfigConstants.OPENSEARCH_RESOURCE_SHARING_WORKSPACE_MEMBERSHIP_REFRESH_INTERVAL,
+                    ConfigConstants.OPENSEARCH_RESOURCE_SHARING_WORKSPACE_MEMBERSHIP_REFRESH_INTERVAL_DEFAULT
+                )
+            );
+        }
+
         RoleMapper roleMapper = new RolesInjector.InjectedRoleMapper(
             new ConfigurableRoleMapper(cr, settings),
             threadPool.getThreadContext()
@@ -2733,6 +2748,14 @@ public final class OpenSearchSecurityPlugin extends OpenSearchSecuritySSLPlugin
                     Property.Filtered
                 )
             );
+            settings.add(
+                Setting.timeSetting(
+                    ConfigConstants.OPENSEARCH_RESOURCE_SHARING_WORKSPACE_MEMBERSHIP_REFRESH_INTERVAL,
+                    ConfigConstants.OPENSEARCH_RESOURCE_SHARING_WORKSPACE_MEMBERSHIP_REFRESH_INTERVAL_DEFAULT,
+                    Property.NodeScope,
+                    Property.Filtered
+                )
+            );
 
             settings.add(UserFactory.Caching.MAX_SIZE);
             settings.add(UserFactory.Caching.EXPIRE_AFTER_ACCESS);
@@ -3005,7 +3028,8 @@ public final class OpenSearchSecurityPlugin extends OpenSearchSecuritySSLPlugin
                 ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX,
                 ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX_DEFAULT
             );
-            exts.add(new DashboardsResourceSharingExtension(dashboardsIndex));
+            workspaceMembershipCache = new WorkspaceMembershipCache(dashboardsIndex);
+            exts.add(new DashboardsResourceSharingExtension(dashboardsIndex, workspaceMembershipCache));
             dashboardsOnboarded = true;
             log.info("Registered built-in Dashboards saved-object resource types on index {}", dashboardsIndex);
         }
