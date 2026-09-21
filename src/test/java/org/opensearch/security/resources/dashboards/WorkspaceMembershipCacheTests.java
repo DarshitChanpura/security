@@ -78,10 +78,7 @@ public class WorkspaceMembershipCacheTests {
         assertEquals(Set.of("ws-role"), cache.resolve("bob", Set.of("analyst"), Set.of()));
         assertEquals(Set.of("ws-backend"), cache.resolve("bob", Set.of(), Set.of("ldap_team")));
         // All three channels union together.
-        assertEquals(
-            Set.of("ws-user", "ws-role", "ws-backend"),
-            cache.resolve("alice", Set.of("analyst"), Set.of("ldap_team"))
-        );
+        assertEquals(Set.of("ws-user", "ws-role", "ws-backend"), cache.resolve("alice", Set.of("analyst"), Set.of("ldap_team")));
     }
 
     @Test
