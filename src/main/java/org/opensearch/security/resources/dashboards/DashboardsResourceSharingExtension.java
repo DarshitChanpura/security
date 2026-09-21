@@ -70,9 +70,11 @@ public class DashboardsResourceSharingExtension implements ResourceSharingExtens
     );
 
     private final String dashboardsIndex;
+    private final WorkspaceMembershipCache membershipCache;
 
-    public DashboardsResourceSharingExtension(String dashboardsIndex) {
+    public DashboardsResourceSharingExtension(String dashboardsIndex, WorkspaceMembershipCache membershipCache) {
         this.dashboardsIndex = dashboardsIndex;
+        this.membershipCache = membershipCache;
     }
 
     @Override
@@ -114,6 +116,15 @@ public class DashboardsResourceSharingExtension implements ResourceSharingExtens
     public void assignResourceSharingClient(ResourceSharingClient client) {
         // No-op: enforcement for these types happens inside the security plugin, so there is no in-process consumer
         // that needs the client handed to it.
+    }
+
+    /**
+     * Derived from the {@code workspace} sharing records rather than from an external source, so it satisfies the
+     * trusted, I/O-free contract: the records are owned by this plugin and are read on a schedule, not on this call.
+     */
+    @Override
+    public Set<String> resolveWorkspacesForUser(String username, Set<String> securityRoles, Set<String> backendRoles) {
+        return membershipCache.resolve(username, securityRoles, backendRoles);
     }
 
     /**
