@@ -180,6 +180,61 @@ public class ResourceAccessHandler {
     }
 
     /**
+     * Evaluates a raw document operation against the sharing record for {@code (resourceIndex, resourceId)}.
+     * <p>
+     * Unlike {@link #hasPermission}, the resource type is taken from the sharing record rather than supplied by the
+     * caller. Core's document requests report a type of {@code "indices"}, so a raw write cannot say which shareable
+     * type it targets — but the record can, and the record has to be fetched to authorize anyway.
+     * <p>
+     * A missing record denies, matching {@link #hasPermission}: a document with no sharing record is not authorized
+     * through sharing, so indices must be migrated before their writes are governed.
+     */
+    public void hasPermissionForDocument(
+        @NonNull String resourceIndex,
+        @NonNull String resourceId,
+        @NonNull String action,
+        ActionListener<Boolean> listener
+    ) {
+        final User user = (User) threadContext.getPersistent(ConfigConstants.OPENDISTRO_SECURITY_AUTHENTICATED_USER);
+
+        if (user == null) {
+            LOGGER.warn("No authenticated user found. Document {} in {} is not authorized.", resourceId, resourceIndex);
+            listener.onResponse(false);
+            return;
+        }
+
+        if (adminDNs.isAdmin(user)) {
+            listener.onResponse(true);
+            return;
+        }
+
+        resourceSharingIndexHandler.fetchSharingInfo(resourceIndex, resourceId, ActionListener.wrap(sharingInfo -> {
+            if (sharingInfo == null) {
+                LOGGER.warn("No sharing info found for document {} in {}. Action {} is not allowed.", resourceId, resourceIndex, action);
+                listener.onResponse(false);
+                return;
+            }
+
+            String resourceType = sharingInfo.getResourceType();
+            if (resourceType == null) {
+                LOGGER.warn("Sharing record for {} declares no resource type; denying action {}.", resourceId, action);
+                listener.onResponse(false);
+                return;
+            }
+
+            if (recordGrantsAction(sharingInfo, resourceType, user, action)) {
+                listener.onResponse(true);
+                return;
+            }
+
+            checkContainers(sharingInfo, action, listener);
+        }, e -> {
+            LOGGER.error("Error checking document permission for {} on {}: {}", user.getName(), resourceId, e.getMessage());
+            listener.onFailure(e);
+        }));
+    }
+
+    /**
      * Returns whether a single sharing record grants the given user the requested action directly — i.e. the user is
      * the creator, or is shared with at an access level whose resolved action-group matches {@code action}. This is a
      * pure, in-memory computation (no I/O), factored out so it can be reused both for the resource itself and for each

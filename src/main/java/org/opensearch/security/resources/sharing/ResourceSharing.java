@@ -150,6 +150,10 @@ public class ResourceSharing implements ToXContentFragment, NamedWriteable {
         this.resourceId = resourceId;
     }
 
+    public String getResourceType() {
+        return resourceType;
+    }
+
     public String getTenant() {
         return tenant;
     }
