@@ -47,16 +47,21 @@ public class ResourceAccessEvaluator {
     private final OpensearchDynamicSetting<Boolean> resourceSharingEnabledSetting;
     private final OpensearchDynamicSetting<List<String>> protectedResourceTypesSetting;
 
+    /** Kill switch for governing raw document writes; see {@link #isGovernedDocumentWrite}. */
+    private final boolean documentWriteGovernanceEnabled;
+
     public ResourceAccessEvaluator(
         ResourcePluginInfo resourcePluginInfo,
         ResourceAccessHandler resourceAccessHandler,
         final OpensearchDynamicSetting<Boolean> resourceSharingEnabledSetting,
-        final OpensearchDynamicSetting<List<String>> protectedResourceTypesSetting
+        final OpensearchDynamicSetting<List<String>> protectedResourceTypesSetting,
+        final boolean documentWriteGovernanceEnabled
     ) {
         this.resourcePluginInfo = resourcePluginInfo;
         this.resourceAccessHandler = resourceAccessHandler;
         this.resourceSharingEnabledSetting = resourceSharingEnabledSetting;
         this.protectedResourceTypesSetting = protectedResourceTypesSetting;
+        this.documentWriteGovernanceEnabled = documentWriteGovernanceEnabled;
     }
 
     /**
@@ -80,13 +85,20 @@ public class ResourceAccessEvaluator {
     ) {
         log.debug("Evaluating resource access");
 
-        resourceAccessHandler.hasPermission(request.id(), request.type(), action, ActionListener.wrap(hasAccess -> {
+        ActionListener<Boolean> decision = ActionListener.wrap(hasAccess -> {
             if (hasAccess) {
                 pResponseListener.onResponse(PrivilegesEvaluatorResponse.ok());
             } else {
                 pResponseListener.onResponse(PrivilegesEvaluatorResponse.insufficient(action));
             }
-        }, e -> { pResponseListener.onResponse(PrivilegesEvaluatorResponse.insufficient(action)); }));
+        }, e -> { pResponseListener.onResponse(PrivilegesEvaluatorResponse.insufficient(action)); });
+
+        if (isDocumentWrite(request)) {
+            // A document request reports its type as "indices", so the shareable type comes from the sharing record.
+            resourceAccessHandler.hasPermissionForDocument(request.index(), request.id(), action, decision);
+        } else {
+            resourceAccessHandler.hasPermission(request.id(), request.type(), action, decision);
+        }
     }
 
     /**
@@ -116,7 +128,10 @@ public class ResourceAccessEvaluator {
          *   in a {@code _bulk} request.
          */
         if (request instanceof GetRequest) return false;
-        if (request instanceof DocWriteRequest<?>) return false;
+        if (request instanceof DocWriteRequest<?>) {
+            // Writes stay excluded unless they are explicitly governed; see isGovernedDocumentWrite for the scope.
+            return isGovernedDocumentWrite(docRequest);
+        }
         if (Strings.isNullOrEmpty(docRequest.id())) {
             log.debug("Request id is blank or null, request is of type {}", docRequest.getClass().getName());
             return false;
@@ -129,6 +144,44 @@ public class ResourceAccessEvaluator {
 
         // if a resource is not included in protected resource list, we do not perform resource-level authorization
         return protectedTypes.contains(docRequest.type());
+    }
+
+    /**
+     * Whether a raw document write is governed by resource sharing.
+     * <p>
+     * Deliberately narrow, so that indices reached only through plugin transport actions keep treating raw writes as
+     * plain index operations. All of the following must hold:
+     * <ol>
+     *   <li>write governance is switched on, giving operators a kill switch;</li>
+     *   <li>the target index declares a workspaces field, i.e. it is an index onboarded to workspace sharing rather
+     *       than a plugin-owned resource index;</li>
+     *   <li>the index is protected and the request names a document.</li>
+     * </ol>
+     * The shareable type is intentionally not taken from the request: core reports {@code "indices"} for document
+     * requests, so it is resolved from the sharing record during evaluation instead.
+     */
+    private boolean isGovernedDocumentWrite(DocRequest docRequest) {
+        if (!documentWriteGovernanceEnabled) {
+            return false;
+        }
+        if (Strings.isNullOrEmpty(docRequest.id())) {
+            return false;
+        }
+        String index = docRequest.index();
+        if (!resourcePluginInfo.getResourceIndicesForProtectedTypes().contains(index)) {
+            return false;
+        }
+        // Only workspace-onboarded indices: a plugin-owned resource index that opts out of workspaces is untouched.
+        if (resourcePluginInfo.workspacesFieldForIndex(index) == null) {
+            log.debug("Index {} declares no workspaces field; treating write as a plain index operation", index);
+            return false;
+        }
+        return true;
+    }
+
+    /** Whether the request is a raw document write, as opposed to a plugin transport action on a resource. */
+    private static boolean isDocumentWrite(Object request) {
+        return request instanceof DocWriteRequest<?>;
     }
 
 }

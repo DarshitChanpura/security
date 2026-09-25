@@ -36,6 +36,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 import org.opensearch.common.settings.Settings;
+import org.opensearch.common.unit.TimeValue;
 import org.opensearch.security.auditlog.impl.AuditCategory;
 
 import com.password4j.types.Hmac;
@@ -84,6 +85,12 @@ public class ConfigConstants {
 
     public static final String OPENDISTRO_SECURITY_CONF_REQUEST_HEADER = OPENDISTRO_SECURITY_CONFIG_PREFIX + "conf_request";
     public static final String OPENSEARCH_SECURITY_REQUEST_HEADERS = OPENSEARCH_SECURITY_CONFIG_PREFIX + "request_headers";
+
+    // Request-scoped current workspace. Dashboards forwards the active workspace (parsed from the /w/<id> URL) as this
+    // client-facing header; the security plugin re-emits it server-side under the guarded internal key so DLS can
+    // narrow resource visibility to that one workspace, intersected with the user's membership.
+    public static final String OPENSEARCH_CURRENT_WORKSPACE_HEADER = "currentworkspace";
+    public static final String OPENDISTRO_SECURITY_CURRENT_WORKSPACE = OPENDISTRO_SECURITY_CONFIG_PREFIX + "current_workspace";
 
     public static final String SECURITY_AUDIT_REST_HEADERS = OPENSEARCH_SECURITY_CONFIG_PREFIX + "audit_rest_headers";
 
@@ -468,6 +475,38 @@ public class ConfigConstants {
     // Protected resource types
     // Resource sharing will only apply to these types
     public static final String OPENSEARCH_RESOURCE_SHARING_PROTECTED_TYPES = "plugins.security.resource_sharing.protected_types";
+
+    /**
+     * Registers the built-in Dashboards saved-object resource types (see DashboardsResourceSharingExtension), which
+     * brings them under resource sharing without a separate OpenSearch-side plugin. Off by default; a registered type
+     * still only takes effect once it is also listed in {@link #OPENSEARCH_RESOURCE_SHARING_PROTECTED_TYPES}.
+     */
+    public static final String OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_ONBOARDING_ENABLED =
+        "plugins.security.resource_sharing.dashboards_onboarding.enabled";
+    public static final boolean OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_ONBOARDING_ENABLED_DEFAULT = false;
+
+    /** Index holding Dashboards saved objects; matches {@code dynamic.kibana.index} in the security config. */
+    public static final String OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX = "plugins.security.resource_sharing.dashboards_index";
+    public static final String OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX_DEFAULT = ".kibana";
+
+    /**
+     * Governs raw document writes (index/update/delete) on workspace-onboarded resource indices with the sharing
+     * record, rather than treating them as plain index operations. Off by default: it changes how writes on those
+     * indices are authorized, and requires their sharing records to have been migrated first.
+     */
+    public static final String OPENSEARCH_RESOURCE_SHARING_DOCUMENT_WRITE_GOVERNANCE_ENABLED =
+        "plugins.security.resource_sharing.document_write_governance.enabled";
+    public static final boolean OPENSEARCH_RESOURCE_SHARING_DOCUMENT_WRITE_GOVERNANCE_ENABLED_DEFAULT = false;
+
+    /**
+     * How often workspace membership is re-read from the workspace sharing records. Resolution is I/O-free on the
+     * privilege hot path, so this interval bounds how long a membership change takes to take effect.
+     */
+    public static final String OPENSEARCH_RESOURCE_SHARING_WORKSPACE_MEMBERSHIP_REFRESH_INTERVAL =
+        "plugins.security.resource_sharing.workspace_membership_refresh_interval";
+    public static final TimeValue OPENSEARCH_RESOURCE_SHARING_WORKSPACE_MEMBERSHIP_REFRESH_INTERVAL_DEFAULT = TimeValue.timeValueSeconds(
+        30
+    );
 
     /**
      * Pre-graduation name of {@link #OPENSEARCH_RESOURCE_SHARING_PROTECTED_TYPES}. See
