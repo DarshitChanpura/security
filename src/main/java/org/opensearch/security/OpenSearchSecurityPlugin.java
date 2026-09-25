@@ -1684,7 +1684,12 @@ public final class OpenSearchSecurityPlugin extends OpenSearchSecuritySSLPlugin
             resourcePluginInfo,
             resourceAccessHandler,
             resourceSharingEnabledSetting,
-            resourceSharingProtectedResourceTypesSetting
+            resourceSharingProtectedResourceTypesSetting,
+            pluginSettings != null
+                && pluginSettings.getAsBoolean(
+                    ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DOCUMENT_WRITE_GOVERNANCE_ENABLED,
+                    ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DOCUMENT_WRITE_GOVERNANCE_ENABLED_DEFAULT
+                )
         );
 
         sf = new SecurityFilter(
@@ -2744,6 +2749,14 @@ public final class OpenSearchSecurityPlugin extends OpenSearchSecuritySSLPlugin
                 Setting.simpleString(
                     ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX,
                     ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX_DEFAULT,
+                    Property.NodeScope,
+                    Property.Filtered
+                )
+            );
+            settings.add(
+                Setting.boolSetting(
+                    ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DOCUMENT_WRITE_GOVERNANCE_ENABLED,
+                    ConfigConstants.OPENSEARCH_RESOURCE_SHARING_DOCUMENT_WRITE_GOVERNANCE_ENABLED_DEFAULT,
                     Property.NodeScope,
                     Property.Filtered
                 )

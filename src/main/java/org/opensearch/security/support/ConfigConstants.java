@@ -490,6 +490,15 @@ public class ConfigConstants {
     public static final String OPENSEARCH_RESOURCE_SHARING_DASHBOARDS_INDEX_DEFAULT = ".kibana";
 
     /**
+     * Governs raw document writes (index/update/delete) on workspace-onboarded resource indices with the sharing
+     * record, rather than treating them as plain index operations. Off by default: it changes how writes on those
+     * indices are authorized, and requires their sharing records to have been migrated first.
+     */
+    public static final String OPENSEARCH_RESOURCE_SHARING_DOCUMENT_WRITE_GOVERNANCE_ENABLED =
+        "plugins.security.resource_sharing.document_write_governance.enabled";
+    public static final boolean OPENSEARCH_RESOURCE_SHARING_DOCUMENT_WRITE_GOVERNANCE_ENABLED_DEFAULT = false;
+
+    /**
      * How often workspace membership is re-read from the workspace sharing records. Resolution is I/O-free on the
      * privilege hot path, so this interval bounds how long a membership change takes to take effect.
      */

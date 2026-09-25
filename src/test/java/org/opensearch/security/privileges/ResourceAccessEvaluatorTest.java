@@ -58,7 +58,8 @@ public class ResourceAccessEvaluatorTest {
             resourcePluginInfo,
             resourceAccessHandler,
             mock(OpensearchDynamicSetting.class),
-            mock(OpensearchDynamicSetting.class)
+            mock(OpensearchDynamicSetting.class),
+            true
         );
     }
 
@@ -72,12 +73,13 @@ public class ResourceAccessEvaluatorTest {
         stubAuthenticatedUser();
         IndexRequest req = new IndexRequest(IDX).id("anyId");
 
-        // TODO check to see if type can be something other than indices
+        // An IndexRequest is a raw document write: core reports its type as "indices", so evaluation goes through
+        // hasPermissionForDocument, which resolves the shareable type from the sharing record instead.
         doAnswer(inv -> {
             ActionListener<Boolean> listener = inv.getArgument(3);
             listener.onResponse(hasPermission);
             return null;
-        }).when(resourceAccessHandler).hasPermission(eq("anyId"), eq("indices"), eq("read"), any());
+        }).when(resourceAccessHandler).hasPermissionForDocument(eq(IDX), eq("anyId"), eq("read"), any());
 
         ActionListener<PrivilegesEvaluatorResponse> callback = mock(ActionListener.class);
 
