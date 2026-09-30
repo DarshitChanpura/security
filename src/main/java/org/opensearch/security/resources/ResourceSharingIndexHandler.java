@@ -74,6 +74,7 @@ import org.opensearch.security.resources.sharing.CreatedBy;
 import org.opensearch.security.resources.sharing.Recipient;
 import org.opensearch.security.resources.sharing.ResourceSharing;
 import org.opensearch.security.resources.sharing.ShareWith;
+import org.opensearch.security.resources.sharing.SharingPrincipals;
 import org.opensearch.security.user.User;
 import org.opensearch.threadpool.ThreadPool;
 import org.opensearch.transport.client.Client;
@@ -383,7 +384,7 @@ public class ResourceSharingIndexHandler {
                 // the creator when empty.
                 List<String> initialPrincipals = new ArrayList<>(sharingInfo.getAllPrincipals());
                 if (initialPrincipals.isEmpty()) {
-                    initialPrincipals.add("user:" + createdBy.getUsername());
+                    initialPrincipals.add(SharingPrincipals.user(createdBy.getUsername()));
                 }
                 updateResourceVisibility(resourceId, resourceIndex, initialPrincipals, ActionListener.wrap((updateResponse) -> {
                     LOGGER.debug("postUpdate: Successfully updated visibility for resource {} within index {}", resourceId, resourceIndex);
