@@ -30,6 +30,7 @@ import org.opensearch.core.rest.RestStatus;
 import org.opensearch.security.configuration.AdminDNs;
 import org.opensearch.security.resources.sharing.ResourceSharing;
 import org.opensearch.security.resources.sharing.ShareWith;
+import org.opensearch.security.resources.sharing.SharingPrincipals;
 import org.opensearch.security.securityconf.FlattenedActionGroups;
 import org.opensearch.security.support.ConfigConstants;
 import org.opensearch.security.support.WildcardMatcher;
@@ -184,7 +185,7 @@ public class ResourceAccessHandler {
      * <p>
      * Unlike {@link #hasPermission}, the resource type is taken from the sharing record rather than supplied by the
      * caller. Core's document requests report a type of {@code "indices"}, so a raw write cannot say which shareable
-     * type it targets — but the record can, and the record has to be fetched to authorize anyway.
+     * type it targets, but the record can, and the record has to be fetched to authorize anyway.
      * <p>
      * A missing record denies, matching {@link #hasPermission}: a document with no sharing record is not authorized
      * through sharing, so indices must be migrated before their writes are governed.
@@ -504,10 +505,13 @@ public class ResourceAccessHandler {
         // for users:
         // return flattened principals to build the bool query
         return Stream.concat(
-            // users, plus bare "public" sentinel for publicly shared resources
-            Stream.concat(Stream.of("user:" + user.getName(), "public"), Stream.empty()),
+            // users, plus the public sentinel for publicly shared resources
+            Stream.concat(Stream.of(SharingPrincipals.user(user.getName()), SharingPrincipals.PUBLIC), Stream.empty()),
             // then roles and backend_roles
-            Stream.concat(user.getSecurityRoles().stream().map(r -> "role:" + r), user.getRoles().stream().map(b -> "backend:" + b))
+            Stream.concat(
+                user.getSecurityRoles().stream().map(SharingPrincipals::role),
+                user.getRoles().stream().map(SharingPrincipals::backendRole)
+            )
         ).collect(Collectors.toSet());
     }
 }

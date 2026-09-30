@@ -14,9 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+import org.opensearch.OpenSearchException;
 import org.opensearch.security.resources.ResourcePluginInfo;
 import org.opensearch.security.securityconf.impl.CType;
 import org.opensearch.security.securityconf.impl.SecurityDynamicConfiguration;
@@ -34,6 +32,13 @@ import org.opensearch.security.spi.resources.client.ResourceSharingClient;
  * is registered as its own resource type over that shared index. {@code workspace} is registered too, which is what
  * lets the write-path container fan-out resolve a workspace's own sharing record.
  * <p>
+ * Saved objects reference each other: a dashboard names the visualizations and index-patterns it renders. Sharing
+ * one object does not reach its references, and each referenced type is registered independently here, so a
+ * directly shared dashboard whose index-pattern was not also shared renders broken. Workspace-derived access is
+ * unaffected, because membership grants every object in the workspace, references included. Resolving the
+ * reference graph is therefore only needed for direct per-object sharing, which is separately blocked on the
+ * saved-object index being strictly mapped.
+ * <p>
  * Registration alone changes nothing: a type is only enforced once an operator adds it to
  * {@code plugins.security.resource_sharing.protected_types}, and this extension is only registered at all when
  * {@code plugins.security.resource_sharing.dashboards_onboarding.enabled} is set.
@@ -49,14 +54,14 @@ public class DashboardsResourceSharingExtension implements ResourceSharingExtens
     /** Saved-object types brought under sharing. Deliberately excludes internal types such as {@code config}. */
     static final Set<String> SHAREABLE_TYPES = Set.of("dashboard", "visualization", "search", "index-pattern");
 
-    private static final Logger LOGGER = LogManager.getLogger(DashboardsResourceSharingExtension.class);
-
     // Access levels are expressed as document-level action strings, since that is what a saved-object request carries.
-    private static final List<String> READ_ACTIONS = List.of(
-        "indices:data/read/get",
-        "indices:data/read/mget*",
-        "indices:data/read/search*"
-    );
+    //
+    // Reads are not action-gated: shouldEvaluate skips GetRequest and searches are never evaluated, so read
+    // visibility is enforced by the DLS filter instead. A read level therefore denotes the absence of write access
+    // rather than granting the read itself, and is kept broad so it stays correct if a read path is ever evaluated.
+    private static final List<String> READ_ACTIONS = List.of("indices:data/read/*");
+    // bulk* is inert today: BulkShardRequest is not a DocRequest, so bulk writes are not evaluated until they are
+    // decomposed per item. It is listed so this level stays correct once that lands.
     private static final List<String> READ_WRITE_ACTIONS = List.of(
         "indices:data/read/*",
         "indices:data/write/index*",
@@ -155,7 +160,9 @@ public class DashboardsResourceSharingExtension implements ResourceSharingExtens
             SecurityDynamicConfiguration<ActionGroupsV7> cfg = SecurityDynamicConfiguration.fromMap(levels, CType.ACTIONGROUPS);
             resourcePluginInfo.registerAccessLevels(type, cfg, readOnly);
         } catch (Exception e) {
-            LOGGER.error("Failed to register access levels for built-in Dashboards type {}", type, e);
+            // Fail loudly. A type registered with no access levels authorizes nothing, so swallowing this would
+            // leave a cluster that looks healthy while every shared request is silently denied.
+            throw new OpenSearchException("Failed to register access levels for built-in Dashboards type " + type, e);
         }
     }
 

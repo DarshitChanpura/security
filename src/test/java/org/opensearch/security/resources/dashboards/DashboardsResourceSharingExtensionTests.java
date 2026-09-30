@@ -14,11 +14,15 @@ import java.util.stream.Collectors;
 
 import org.junit.Test;
 
+import org.opensearch.OpenSearchException;
 import org.opensearch.security.resources.ResourcePluginInfo;
+import org.opensearch.security.securityconf.impl.SecurityDynamicConfiguration;
+import org.opensearch.security.securityconf.impl.v7.ActionGroupsV7;
 import org.opensearch.security.spi.resources.ResourceProvider;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -112,8 +116,19 @@ public class DashboardsResourceSharingExtensionTests {
         // A hyphenated type yields underscored level names.
         assertEquals("index_pattern_read_only", info.getDefaultAccessLevel("index-pattern"));
 
-        // Levels resolve to concrete actions, so the write-path check has something to match against.
-        assertTrue(info.flattenedForType("dashboard").resolve(Set.of("dashboard_read_only")).contains("indices:data/read/get"));
+        // Levels resolve to actions, so the write-path check has something to match against. Read-only carries
+        // only read actions, which is what makes it deny writes; the read itself is granted by DLS, not here.
+        Set<String> readOnly = info.flattenedForType("dashboard").resolve(Set.of("dashboard_read_only"));
+        assertTrue(readOnly.contains("indices:data/read/*"));
+        assertTrue(readOnly.stream().noneMatch(a -> a.startsWith("indices:data/write")));
+
+        // Read-write adds writes; full access additionally carries the share action.
+        Set<String> readWrite = info.flattenedForType("dashboard").resolve(Set.of("dashboard_read_write"));
+        assertTrue(readWrite.contains("indices:data/write/index*"));
+        assertTrue(readWrite.stream().noneMatch(a -> a.startsWith("cluster:admin/security/resource/share")));
+        assertTrue(
+            info.flattenedForType("dashboard").resolve(Set.of("dashboard_full_access")).contains("cluster:admin/security/resource/share")
+        );
     }
 
     @Test
@@ -125,5 +140,27 @@ public class DashboardsResourceSharingExtensionTests {
             List.of(DashboardsResourceSharingExtension.WORKSPACE_TYPE, "dashboard", "visualization", "search", "index-pattern")
         );
         assertEquals("workspaces", info.workspacesFieldForIndex(INDEX));
+    }
+
+    @Test
+    public void accessLevelRegistrationFailureIsNotSwallowed() {
+        // A type registered with no access levels authorizes nothing, so a failure here must surface rather than
+        // leave a cluster that looks healthy while every shared request is silently denied.
+        ResourcePluginInfo failing = new ResourcePluginInfo() {
+            @Override
+            public void registerAccessLevels(
+                String resourceType,
+                SecurityDynamicConfiguration<ActionGroupsV7> accessLevels,
+                String defaultAccessLevel
+            ) {
+                throw new IllegalStateException("boom");
+            }
+        };
+
+        OpenSearchException e = assertThrows(
+            OpenSearchException.class,
+            () -> DashboardsResourceSharingExtension.registerAccessLevels(failing)
+        );
+        assertTrue(e.getMessage().contains("Failed to register access levels"));
     }
 }

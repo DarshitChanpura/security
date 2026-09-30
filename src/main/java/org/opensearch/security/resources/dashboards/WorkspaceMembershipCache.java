@@ -22,13 +22,14 @@ import org.opensearch.core.action.ActionListener;
 import org.opensearch.security.resources.ResourceSharingIndexHandler;
 import org.opensearch.security.resources.SharingRecord;
 import org.opensearch.security.resources.sharing.ResourceSharing;
+import org.opensearch.security.resources.sharing.SharingPrincipals;
 import org.opensearch.threadpool.ThreadPool;
 
 /**
  * Resolves which workspaces a user can reach, from the sharing records of the {@code workspace} resource type.
  * <p>
  * Workspace membership is already expressed as resource sharing: a {@code workspace} record's {@code share_with} names
- * the users, roles and backend roles that hold access to it. So membership needs no external resolver — it is derived
+ * the users, roles and backend roles that hold access to it. So membership needs no external resolver: it is derived
  * from records this plugin already owns, which also makes it inherently server-set rather than user-assertable.
  * <p>
  * Resolution happens on the privilege hot path and must not perform I/O, so records are read on a schedule into a
@@ -38,16 +39,13 @@ import org.opensearch.threadpool.ThreadPool;
  * <ul>
  *   <li>Membership changes take effect no later than one refresh interval, so a revoked collaborator may retain
  *       workspace-derived read visibility until the next refresh. Narrow the interval if that window matters.</li>
- *   <li>Before the first successful refresh, and if every refresh fails, resolution returns nothing — workspace-derived
+ *   <li>Before the first successful refresh, and if every refresh fails, resolution returns nothing, so workspace-derived
  *       visibility is simply off rather than over-granted.</li>
  * </ul>
  */
 public class WorkspaceMembershipCache {
 
     private static final Logger LOGGER = LogManager.getLogger(WorkspaceMembershipCache.class);
-
-    /** Principal emitted for a workspace shared via general access, i.e. reachable by every authenticated user. */
-    private static final String PUBLIC_PRINCIPAL = "public";
 
     private final String dashboardsIndex;
 
@@ -68,18 +66,18 @@ public class WorkspaceMembershipCache {
         }
 
         Set<String> workspaces = new HashSet<>();
-        addMatches(workspaces, snapshot, PUBLIC_PRINCIPAL);
+        addMatches(workspaces, snapshot, SharingPrincipals.PUBLIC);
         if (username != null) {
-            addMatches(workspaces, snapshot, "user:" + username);
+            addMatches(workspaces, snapshot, SharingPrincipals.user(username));
         }
         if (securityRoles != null) {
             for (String role : securityRoles) {
-                addMatches(workspaces, snapshot, "role:" + role);
+                addMatches(workspaces, snapshot, SharingPrincipals.role(role));
             }
         }
         if (backendRoles != null) {
             for (String backendRole : backendRoles) {
-                addMatches(workspaces, snapshot, "backend:" + backendRole);
+                addMatches(workspaces, snapshot, SharingPrincipals.backendRole(backendRole));
             }
         }
         return workspaces;

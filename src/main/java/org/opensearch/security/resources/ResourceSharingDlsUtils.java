@@ -25,6 +25,7 @@ import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.security.privileges.dlsfls.DlsRestriction;
 import org.opensearch.security.privileges.dlsfls.DocumentPrivileges;
 import org.opensearch.security.privileges.dlsfls.IndexToRuleMap;
+import org.opensearch.security.resources.sharing.SharingPrincipals;
 import org.opensearch.security.support.ConfigConstants;
 import org.opensearch.security.user.User;
 
@@ -40,17 +41,17 @@ public class ResourceSharingDlsUtils {
     ) {
 
         List<String> principals = new ArrayList<>();
-        principals.add("public"); // matches resources shared via general_access
-        principals.add("user:" + user.getName()); // owner
+        principals.add(SharingPrincipals.PUBLIC); // matches resources shared via general_access
+        principals.add(SharingPrincipals.user(user.getName())); // owner
 
         // Security roles (OpenSearch Security roles)
         if (user.getSecurityRoles() != null) {
-            user.getSecurityRoles().forEach(r -> principals.add("role:" + r));
+            user.getSecurityRoles().forEach(r -> principals.add(SharingPrincipals.role(r)));
         }
 
         // Backend roles (LDAP/SAML/etc)
         if (user.getRoles() != null) {
-            user.getRoles().forEach(br -> principals.add("backend:" + br));
+            user.getRoles().forEach(br -> principals.add(SharingPrincipals.backendRole(br)));
         }
 
         // Workspace visibility is expressed as a separate clause on the resource's own `workspaces` field (which OSD

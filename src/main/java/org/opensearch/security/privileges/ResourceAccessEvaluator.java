@@ -180,7 +180,7 @@ public class ResourceAccessEvaluator {
     }
 
     /** Whether the request is a raw document write, as opposed to a plugin transport action on a resource. */
-    private static boolean isDocumentWrite(Object request) {
+    private static boolean isDocumentWrite(DocRequest request) {
         return request instanceof DocWriteRequest<?>;
     }
 

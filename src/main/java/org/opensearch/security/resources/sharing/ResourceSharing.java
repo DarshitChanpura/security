@@ -519,7 +519,7 @@ public class ResourceSharing implements ToXContentFragment, NamedWriteable {
 
         // Add creator
         if (createdBy != null) {
-            principals.add("user:" + createdBy.getUsername());
+            principals.add(SharingPrincipals.user(createdBy.getUsername()));
         }
 
         // Workspace membership is not a principal: DLS filters the resource's own `workspaces` field instead
@@ -528,7 +528,7 @@ public class ResourceSharing implements ToXContentFragment, NamedWriteable {
         // Add shared recipients
         if (shareWith != null) {
             if (shareWith.isPublic()) {
-                principals.add("public");
+                principals.add(SharingPrincipals.PUBLIC);
             }
             // shared with at any access level
             for (Recipients recipients : shareWith.getSharingInfo().values()) {
@@ -537,19 +537,19 @@ public class ResourceSharing implements ToXContentFragment, NamedWriteable {
                 // Add users
                 Set<String> users = recipientMap.getOrDefault(Recipient.USERS, Collections.emptySet());
                 for (String user : users) {
-                    principals.add("user:" + user);
+                    principals.add(SharingPrincipals.user(user));
                 }
 
                 // Add roles
                 Set<String> roles = recipientMap.getOrDefault(Recipient.ROLES, Collections.emptySet());
                 for (String role : roles) {
-                    principals.add("role:" + role);
+                    principals.add(SharingPrincipals.role(role));
                 }
 
                 // Add backend roles
                 Set<String> backendRoles = recipientMap.getOrDefault(Recipient.BACKEND_ROLES, Collections.emptySet());
                 for (String backendRole : backendRoles) {
-                    principals.add("backend:" + backendRole);
+                    principals.add(SharingPrincipals.backendRole(backendRole));
                 }
             }
         }
