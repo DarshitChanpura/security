@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import org.opensearch.security.resources.ResourceSharingIndexHandler;
 import org.opensearch.security.resources.SharingRecord;
 import org.opensearch.security.resources.sharing.CreatedBy;
 import org.opensearch.security.resources.sharing.Recipient;
@@ -23,6 +24,10 @@ import org.opensearch.security.resources.sharing.ShareWith;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 
 /**
  * Unit tests for deriving workspace membership from workspace sharing records.
@@ -132,5 +137,24 @@ public class WorkspaceMembershipCacheTests {
             List.of(workspace("ws-1", "owner", sharedWith("workspace_read_only", Recipient.USERS, "alice")))
         );
         assertTrue(cache.resolve(null, null, null).isEmpty());
+    }
+
+    @Test
+    public void refreshDoesNotPropagateASynchronousFailure() {
+        // start() schedules the first refresh while the node is still being constructed, where the sharing index
+        // does not exist yet. A synchronous throw must not escape: it would fail node start on the first run and
+        // kill the recurring task afterwards.
+        ResourceSharingIndexHandler handler = mock(ResourceSharingIndexHandler.class);
+        doThrow(new IllegalStateException("cluster not ready")).when(handler)
+            .fetchAllResourceSharingRecords(anyString(), anyString(), any());
+
+        WorkspaceMembershipCache cache = cacheOf(
+            List.of(workspace("ws-1", "owner", sharedWith("workspace_read_only", Recipient.USERS, "alice")))
+        );
+
+        cache.refresh(handler); // must not throw
+
+        // The previous snapshot survives rather than being dropped, so a failed read does not revoke visibility.
+        assertEquals(Set.of("ws-1"), cache.resolve("alice", Set.of(), Set.of()));
     }
 }

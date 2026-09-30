@@ -91,15 +91,31 @@ public class WorkspaceMembershipCache {
     }
 
     /**
-     * Refreshes now and then on a fixed delay. Safe to call once the sharing index handler exists.
+     * Schedules the first refresh and then repeats it on a fixed delay. Safe to call once the sharing index handler
+     * exists.
+     * <p>
+     * The first refresh is scheduled rather than run inline because this is called while the node is still being
+     * constructed, where the sharing index does not exist yet and the client cannot serve a search. Running it on the
+     * calling thread would both fail every time and, if the search threw synchronously, propagate out of component
+     * construction and fail node start.
      */
     public void start(ResourceSharingIndexHandler sharingIndexHandler, ThreadPool threadPool, TimeValue refreshInterval) {
-        refresh(sharingIndexHandler);
+        threadPool.schedule(() -> refresh(sharingIndexHandler), TimeValue.ZERO, ThreadPool.Names.GENERIC);
         threadPool.scheduleWithFixedDelay(() -> refresh(sharingIndexHandler), refreshInterval, ThreadPool.Names.GENERIC);
         LOGGER.info("Workspace membership resolution enabled for index {}, refreshing every {}", dashboardsIndex, refreshInterval);
     }
 
     void refresh(ResourceSharingIndexHandler sharingIndexHandler) {
+        try {
+            fetch(sharingIndexHandler);
+        } catch (Exception e) {
+            // A synchronous failure must not escape: on the scheduled path it would kill the recurring task, and
+            // the first run happens while the node is still starting.
+            LOGGER.warn("Failed to start a workspace membership refresh, keeping the previous snapshot: {}", e.toString());
+        }
+    }
+
+    private void fetch(ResourceSharingIndexHandler sharingIndexHandler) {
         sharingIndexHandler.fetchAllResourceSharingRecords(
             dashboardsIndex,
             DashboardsResourceSharingExtension.WORKSPACE_TYPE,
