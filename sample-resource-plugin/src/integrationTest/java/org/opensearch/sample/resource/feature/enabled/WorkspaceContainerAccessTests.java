@@ -215,6 +215,52 @@ public class WorkspaceContainerAccessTests {
         awaitSharingRecordWorkspace(resId, true, workspaceId);
     }
 
+    @Test
+    public void testStrictMappingRejectsPrincipalStamping() throws Exception {
+        // Read path blocker: for every resource type the plugin stamps `all_shared_principals` onto the resource
+        // document, and that list is the first DLS should-clause. OpenSearch Dashboards maps its saved-object index
+        // with `dynamic: strict`, so that stamping write is rejected and the per-person half of the filter has nothing
+        // to match. This pins the mechanism, which was previously only inferred from reading the mappings code.
+        final String strictIndex = "strict_saved_objects";
+        try (TestRestClient client = cluster.getRestClient(cluster.getAdminCertificate())) {
+            // Mirrors the saved-object index shape: strict, and with no `all_shared_principals` in the mapping.
+            HttpResponse created = client.putJson(
+                strictIndex,
+                "{\"mappings\":{\"dynamic\":\"strict\",\"properties\":{"
+                    + "\"type\":{\"type\":\"keyword\"},"
+                    + "\"workspaces\":{\"type\":\"keyword\"}"
+                    + "}}}"
+            );
+            created.assertStatusCode(HttpStatus.SC_OK);
+
+            HttpResponse indexed = client.putJson(
+                strictIndex + "/_doc/dashboard:one?refresh=true",
+                "{\"type\":\"dashboard\",\"workspaces\":[\"ws-1\"]}"
+            );
+            assertThat(indexed.getStatusCode(), equalTo(HttpStatus.SC_CREATED));
+
+            // The workspace clause keeps working, because `workspaces` IS mapped.
+            HttpResponse workspaceUpdate = client.postJson(
+                strictIndex + "/_update/dashboard:one?refresh=true",
+                "{\"doc\":{\"workspaces\":[\"ws-1\",\"ws-2\"]}}"
+            );
+            workspaceUpdate.assertStatusCode(HttpStatus.SC_OK);
+
+            // The principal stamping does not: the field is unmapped and the index is strict.
+            HttpResponse principalStamp = client.postJson(
+                strictIndex + "/_update/dashboard:one?refresh=true",
+                "{\"doc\":{\"all_shared_principals\":[\"user:someone\"]}}"
+            );
+            assertThat(principalStamp.getStatusCode(), equalTo(HttpStatus.SC_BAD_REQUEST));
+            assertThat(principalStamp.getBody(), containsString("strict_dynamic_mapping_exception"));
+            assertThat(principalStamp.getBody(), containsString("all_shared_principals"));
+        } finally {
+            try (TestRestClient client = cluster.getRestClient(cluster.getAdminCertificate())) {
+                client.delete(strictIndex);
+            }
+        }
+    }
+
     private long readWorkspacesSeqNo(String resourceId) {
         try (TestRestClient client = cluster.getRestClient(cluster.getAdminCertificate())) {
             HttpResponse resp = client.get(RESOURCE_SHARING_INDEX + "/_doc/" + resourceId);
