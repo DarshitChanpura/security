@@ -571,6 +571,25 @@ public class DlsFlsValveImpl implements DlsFlsRequestValve {
                 queryBuilder.add(searchContext.parsedQuery().query(), Occur.MUST);
 
                 searchContext.parsedQuery(new ParsedQuery(queryBuilder.build()));
+
+                // The clauses above restrict which documents match, but the BM25 statistics behind their scores still
+                // describe the whole shard, so a term confined to documents this user cannot read still lowers the IDF
+                // of the documents they can. Hand core the restriction on its own so statistics can be computed over
+                // that subset. Core ignores this unless the filtered_stats behaviour is enabled, so the default path is
+                // unchanged.
+                //
+                // The restriction is rebuilt rather than shared with the query above because a Lucene
+                // BooleanQuery.Builder cannot be built twice, and the combined query's structure is left exactly as it
+                // was to avoid perturbing existing scores. That costs a second parse of the DLS queries, which is
+                // acceptable while this is being evaluated and is the obvious thing to tidy if it ships.
+                BooleanQuery.Builder restrictionOnly = dlsRestriction.toBooleanQueryBuilder(
+                    searchContext.getQueryShardContext(),
+                    (q) -> new ConstantScoreQuery(q)
+                );
+                if (restrictionOnly != null) {
+                    searchContext.visibleSubsetFilter(restrictionOnly.build());
+                }
+
                 searchContext.preProcess(true);
             }
         } catch (Exception e) {
