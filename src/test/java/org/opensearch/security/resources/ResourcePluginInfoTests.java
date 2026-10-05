@@ -315,6 +315,17 @@ public class ResourcePluginInfoTests {
         assertTrue(ResourcePluginInfo.extractMultiValuedFieldFromIndexOp("workspaces", indexOp).isEmpty());
     }
 
+    @Test
+    public void workspacesFieldIsOptedOutByDefault() {
+        // A provider takes part in workspace membership only by declaring the field, because declaring it costs a
+        // sharing-record read and write on every write to a document of that type.
+        registerProviders(List.of("monitor"), ".alerting-config", null);
+        resourcePluginInfo.updateProtectedTypes(List.of("monitor"));
+
+        assertNull(resourcePluginInfo.getResourceProvider("monitor").workspacesField());
+        assertNull(resourcePluginInfo.workspacesFieldForIndex(".alerting-config"));
+    }
+
     // ---------- workspacesFieldForIndex ------------------------------------------------------------
 
     @Test

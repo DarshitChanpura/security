@@ -36,6 +36,12 @@ public class SampleResourceGroupExtension implements ResourceSharingExtension {
             public String typeField() {
                 return "resource_type";
             }
+
+            @Override
+            public String workspacesField() {
+                // Shares an index with the sample resource, which declares this field, so declare the same one.
+                return "workspaces";
+            }
         });
     }
 
