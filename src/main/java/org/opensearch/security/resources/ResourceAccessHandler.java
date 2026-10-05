@@ -30,6 +30,7 @@ import org.opensearch.core.rest.RestStatus;
 import org.opensearch.security.configuration.AdminDNs;
 import org.opensearch.security.resources.sharing.ResourceSharing;
 import org.opensearch.security.resources.sharing.ShareWith;
+import org.opensearch.security.resources.sharing.SharingPrincipals;
 import org.opensearch.security.securityconf.FlattenedActionGroups;
 import org.opensearch.security.support.ConfigConstants;
 import org.opensearch.security.support.WildcardMatcher;
@@ -175,6 +176,61 @@ public class ResourceAccessHandler {
             checkContainers(sharingInfo, action, listener);
         }, e -> {
             LOGGER.error("Error while checking permission for user {} on resource {}: {}", user.getName(), resourceId, e.getMessage());
+            listener.onFailure(e);
+        }));
+    }
+
+    /**
+     * Evaluates a raw document operation against the sharing record for {@code (resourceIndex, resourceId)}.
+     * <p>
+     * Unlike {@link #hasPermission}, the resource type is taken from the sharing record rather than supplied by the
+     * caller. Core's document requests report a type of {@code "indices"}, so a raw write cannot say which shareable
+     * type it targets, but the record can, and the record has to be fetched to authorize anyway.
+     * <p>
+     * A missing record denies, matching {@link #hasPermission}: a document with no sharing record is not authorized
+     * through sharing, so indices must be migrated before their writes are governed.
+     */
+    public void hasPermissionForDocument(
+        @NonNull String resourceIndex,
+        @NonNull String resourceId,
+        @NonNull String action,
+        ActionListener<Boolean> listener
+    ) {
+        final User user = (User) threadContext.getPersistent(ConfigConstants.OPENDISTRO_SECURITY_AUTHENTICATED_USER);
+
+        if (user == null) {
+            LOGGER.warn("No authenticated user found. Document {} in {} is not authorized.", resourceId, resourceIndex);
+            listener.onResponse(false);
+            return;
+        }
+
+        if (adminDNs.isAdmin(user)) {
+            listener.onResponse(true);
+            return;
+        }
+
+        resourceSharingIndexHandler.fetchSharingInfo(resourceIndex, resourceId, ActionListener.wrap(sharingInfo -> {
+            if (sharingInfo == null) {
+                LOGGER.warn("No sharing info found for document {} in {}. Action {} is not allowed.", resourceId, resourceIndex, action);
+                listener.onResponse(false);
+                return;
+            }
+
+            String resourceType = sharingInfo.getResourceType();
+            if (resourceType == null) {
+                LOGGER.warn("Sharing record for {} declares no resource type; denying action {}.", resourceId, action);
+                listener.onResponse(false);
+                return;
+            }
+
+            if (recordGrantsAction(sharingInfo, resourceType, user, action)) {
+                listener.onResponse(true);
+                return;
+            }
+
+            checkContainers(sharingInfo, action, listener);
+        }, e -> {
+            LOGGER.error("Error checking document permission for {} on {}: {}", user.getName(), resourceId, e.getMessage());
             listener.onFailure(e);
         }));
     }
@@ -449,10 +505,13 @@ public class ResourceAccessHandler {
         // for users:
         // return flattened principals to build the bool query
         return Stream.concat(
-            // users, plus bare "public" sentinel for publicly shared resources
-            Stream.concat(Stream.of("user:" + user.getName(), "public"), Stream.empty()),
+            // users, plus the public sentinel for publicly shared resources
+            Stream.concat(Stream.of(SharingPrincipals.user(user.getName()), SharingPrincipals.PUBLIC), Stream.empty()),
             // then roles and backend_roles
-            Stream.concat(user.getSecurityRoles().stream().map(r -> "role:" + r), user.getRoles().stream().map(b -> "backend:" + b))
+            Stream.concat(
+                user.getSecurityRoles().stream().map(SharingPrincipals::role),
+                user.getRoles().stream().map(SharingPrincipals::backendRole)
+            )
         ).collect(Collectors.toSet());
     }
 }

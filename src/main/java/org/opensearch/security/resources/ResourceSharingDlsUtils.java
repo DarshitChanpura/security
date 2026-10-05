@@ -18,12 +18,15 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import org.opensearch.common.util.concurrent.ThreadContext;
 import org.opensearch.common.xcontent.XContentFactory;
 import org.opensearch.core.xcontent.NamedXContentRegistry;
 import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.security.privileges.dlsfls.DlsRestriction;
 import org.opensearch.security.privileges.dlsfls.DocumentPrivileges;
 import org.opensearch.security.privileges.dlsfls.IndexToRuleMap;
+import org.opensearch.security.resources.sharing.SharingPrincipals;
+import org.opensearch.security.support.ConfigConstants;
 import org.opensearch.security.user.User;
 
 public class ResourceSharingDlsUtils {
@@ -33,21 +36,22 @@ public class ResourceSharingDlsUtils {
         NamedXContentRegistry xContentRegistry,
         Collection<String> resolvedIndices,
         User user,
-        ResourcePluginInfo resourcePluginInfo
+        ResourcePluginInfo resourcePluginInfo,
+        ThreadContext threadContext
     ) {
 
         List<String> principals = new ArrayList<>();
-        principals.add("public"); // matches resources shared via general_access
-        principals.add("user:" + user.getName()); // owner
+        principals.add(SharingPrincipals.PUBLIC); // matches resources shared via general_access
+        principals.add(SharingPrincipals.user(user.getName())); // owner
 
         // Security roles (OpenSearch Security roles)
         if (user.getSecurityRoles() != null) {
-            user.getSecurityRoles().forEach(r -> principals.add("role:" + r));
+            user.getSecurityRoles().forEach(r -> principals.add(SharingPrincipals.role(r)));
         }
 
         // Backend roles (LDAP/SAML/etc)
         if (user.getRoles() != null) {
-            user.getRoles().forEach(br -> principals.add("backend:" + br));
+            user.getRoles().forEach(br -> principals.add(SharingPrincipals.backendRole(br)));
         }
 
         // Workspace visibility is expressed as a separate clause on the resource's own `workspaces` field (which OSD
@@ -56,6 +60,17 @@ public class ResourceSharingDlsUtils {
         // I/O-free source (see that interface's javadoc). Filtering the live field means associate/dissociate are
         // reflected automatically. If no extension implements the resolver, the set is empty and the clause is omitted.
         Set<String> userWorkspaces = resourcePluginInfo == null ? Set.of() : resourcePluginInfo.resolveWorkspacesForUser(user);
+
+        // Request-scoped narrowing: when Dashboards forwards the workspace the UI is in, scope visibility to just that
+        // workspace by intersecting with membership. This only narrows - a workspace the user isn't a member of
+        // intersects to empty, so it can never grant. No header means the user's full membership applies.
+        String requestedWorkspace = null;
+        if (threadContext != null) {
+            requestedWorkspace = (String) threadContext.getPersistent(ConfigConstants.OPENDISTRO_SECURITY_CURRENT_WORKSPACE);
+        }
+        if (requestedWorkspace != null && !requestedWorkspace.isBlank()) {
+            userWorkspaces = userWorkspaces.contains(requestedWorkspace) ? Set.of(requestedWorkspace) : Set.of();
+        }
 
         // The workspaces clause targets the field each provider actually declares (workspacesField()), resolved per
         // index — not a hardcoded name — so it matches the field ingestion reads. Built per index accordingly.
